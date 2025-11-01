@@ -52,25 +52,26 @@ export default function Home() {
       
       {/* Newsletter Section */}
       <section className="bg-secondary/50 py-16 dark:bg-secondary/20">
-        <div className="container mx-auto max-w-2xl px-4 text-center">
-            <h2 className="text-3xl font-bold font-display tracking-tight md:text-4xl">
-                Subscribe to our Newsletter
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-                Get the latest data stories and insights from the North-East, delivered once a month.
-            </p>
-            <div className="relative mx-auto mt-8 flex max-w-md">
-                <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="w-full rounded-l-md border border-input bg-background px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-                />
-                <Button className="rounded-l-none rounded-r-md px-6 py-3">
-                    Subscribe
-                </Button>
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">No spam, ever. Unsubscribe anytime.</p>
-        </div>
+        <form
+          action="https://buttondown.email/api/emails/embed-subscribe/northeastindata"
+          method="post"
+          target="_blank"
+          className="relative mx-auto mt-8 flex max-w-md"
+        >
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="Enter your email"
+            className="w-full rounded-l-md border border-input bg-background px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+          />
+          <button
+            type="submit"
+            className="rounded-l-none rounded-r-md px-6 py-3 bg-primary text-primary-foreground font-medium"
+          >
+            Subscribe
+          </button>
+        </form>
       </section>
     </>
   );
