@@ -49,6 +49,7 @@ export interface Article {
   };
   blocks: Block[];
   relatedArticleIds: string[];
+  layout?: string;
   metric?: {
     value: string;
     label: string;

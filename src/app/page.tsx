@@ -1,6 +1,7 @@
 'use client';
 
 import { Hero } from "@/components/Hero";
+import BarStacked from "@/components/charts/BarStacked";
 import { ArrowRight, BarChart, Book, FileText, LineChart, Map, SlidersHorizontal, Layers, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export default function Home() {
              ))}
           </div>
         </section>
+      
 
       </div>
       

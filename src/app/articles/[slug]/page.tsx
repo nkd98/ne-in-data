@@ -9,6 +9,7 @@ import { RelatedArticles } from '@/components/article-blocks/RelatedArticles';
 import { Calendar, Clock } from 'lucide-react';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Author } from '@/lib/types';
+import TeaGrowersPlayground from '@/components/articles/TeaGrowersPlayground';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002';
 
@@ -81,6 +82,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
 
   const authors = article.authorIds.map(id => getAuthorById(id)).filter(Boolean) as Author[];
   const heroImage = PlaceHolderImages.find(img => img.id === article.heroImage.id);
+  const isPlaygroundLayout = article.layout === 'tea-playground';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -132,16 +134,20 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
     ],
   };
 
+  if (isPlaygroundLayout) {
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+        <TeaGrowersPlayground updated={format(new Date(article.updatedAt), 'MMMM yyyy')} />
+      </>
+    );
+  }
+
   return (
     <article className="py-8 md:py-16">
-      <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <header className="container mx-auto max-w-4xl px-4 text-center">
         <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
           {article.title}

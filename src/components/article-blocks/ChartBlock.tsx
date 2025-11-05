@@ -156,7 +156,7 @@ export function ChartBlock({ visual, visualId }: Props) {
             resolvedVisual.source.name
           )}
           {resolvedVisual.spec?.dataUrl && (
-            <>
+             <>
               {' • '}
               <a href={resolvedVisual.spec.dataUrl} download>
                 Download CSV
