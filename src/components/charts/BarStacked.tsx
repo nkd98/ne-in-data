@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useId } from 'react';
+import { useEffect, useState, useMemo, useId, useRef } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import { csvParse, tsvParse } from 'd3-dsv';
 
@@ -32,6 +32,8 @@ export default function BarStacked({
   const [raw, setRaw] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,6 +165,133 @@ export default function BarStacked({
   const sourceId = source ? `${uniqueId}-source` : undefined;
   const updatedId = updated ? `${uniqueId}-updated` : undefined;
   const describedBy = [descriptionId, warningId, sourceId, updatedId].filter(Boolean).join(' ') || undefined;
+  useEffect(() => {
+    const element = wrapperRef.current;
+    if (!element) return;
+    const assignWidth = (width: number) => {
+      const fallback = typeof window !== 'undefined' ? window.innerWidth || desiredMinWidth : desiredMinWidth;
+      const nextWidth = width && width > 0 ? width : fallback;
+      setContainerWidth((prev) => {
+        if (!prev) return nextWidth;
+        return Math.abs(prev - nextWidth) > 0.5 ? nextWidth : prev;
+      });
+    };
+
+    const measure = () => {
+      const node = wrapperRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      assignWidth(rect.width);
+    };
+
+    measure();
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver((entries) => {
+        entries.forEach((entry) => {
+          const width = entry.contentRect?.width ?? 0;
+          assignWidth(width);
+        });
+      });
+      observer.observe(element);
+    } else if (typeof window !== 'undefined') {
+      window.addEventListener('resize', measure);
+    }
+
+    return () => {
+      if (observer) observer.disconnect();
+      else if (typeof window !== 'undefined') window.removeEventListener('resize', measure);
+    };
+  }, [data.length]);
+  const viewportWidth = containerWidth || 0;
+  const MIN_CHART_WIDTH = 320;
+  const desiredMinWidth = MIN_CHART_WIDTH;
+  const hasMeasurement = viewportWidth > 0;
+  const needsScroll = Boolean(hasMeasurement && viewportWidth + 0.5 < desiredMinWidth);
+  const chartWidth = hasMeasurement ? (needsScroll ? desiredMinWidth : viewportWidth) : desiredMinWidth;
+
+  const axisFontSize = chartWidth && chartWidth < 320 ? 10 : chartWidth && chartWidth < 420 ? 11 : 12;
+  const legendFontSize = chartWidth && chartWidth < 540 ? 12 : 13;
+  const labelFontSize = chartWidth && chartWidth < 360 ? 11 : 12;
+  const barCount = data.length;
+  const barPadding = chartWidth && chartWidth < 520 ? 0.04 : 0.08;
+  const longestLabelLength = useMemo(() => {
+    if (!data.length) return 0;
+    return data.reduce((max, row) => {
+      const str = String(row[idxKey] ?? '');
+      return Math.max(max, str.length);
+    }, 0);
+  }, [data, idxKey]);
+
+  const margin = useMemo(() => {
+    // Enough room for long district labels, but avoid oversized gutters on mobile
+    const estimatedLeft = Math.min(180, Math.max(72, longestLabelLength * (axisFontSize * 0.6) + 26));
+    const right = chartWidth && chartWidth < 520 ? 18 : 28;
+    if (!chartWidth) {
+      return { top: 56, right, bottom: 52, left: estimatedLeft };
+    }
+    if (chartWidth < 360) {
+      return { top: 40, right, bottom: 44, left: estimatedLeft };
+    }
+    if (chartWidth < 520) {
+      return { top: 48, right, bottom: 46, left: estimatedLeft };
+    }
+    if (chartWidth < 760) {
+      return { top: 54, right: 30, bottom: 50, left: estimatedLeft };
+    }
+    return { top: 56, right: 32, bottom: 52, left: estimatedLeft };
+  }, [chartWidth, longestLabelLength, axisFontSize]);
+  const availableWidth = useMemo(() => {
+    if (!chartWidth) return 0;
+    const usable = chartWidth - margin.left - margin.right;
+    return usable > 0 ? usable : 0;
+  }, [chartWidth, margin]);
+  const legendConfig = useMemo(() => {
+    if (!seriesKeys.length) return [];
+    const baseLegend = {
+      dataFrom: 'keys' as const,
+      itemWidth: 96,
+      itemHeight: 16,
+      symbolSize: 12,
+    };
+    return [
+      {
+        ...baseLegend,
+        anchor: 'top-left' as const,
+        direction: 'row' as const,
+        translateY: -30,
+        itemsSpacing: chartWidth && chartWidth < 540 ? 6 : 10,
+      },
+    ];
+  }, [chartWidth, seriesKeys.length]);
+  const useInlineLegend = false;
+  const axisBottomLegend = chartWidth && chartWidth < 360 ? 'Share (%)' : 'Share of Tea Area (%)';
+  const axisBottomLegendOffset = chartWidth && chartWidth < 360 ? 34 : 40;
+
+  const barLayers = ['grid', 'axes', 'bars', 'markers', 'legends'];
+
+  const rowHeight = chartWidth
+    ? chartWidth < 360
+      ? 44
+      : chartWidth < 520
+        ? 38
+        : chartWidth < 760
+          ? 34
+          : 30
+    : 32;
+  const computedContentHeight = rowHeight * Math.max(1, barCount);
+  const effectiveHeight = useMemo(() => {
+    const minNeeded = Math.max(280, computedContentHeight + margin.top + margin.bottom);
+    if (typeof height === 'number') {
+      if (chartWidth && chartWidth < 520) {
+        return Math.max(height, minNeeded);
+      }
+      return height;
+    }
+    return minNeeded;
+  }, [height, computedContentHeight, margin, chartWidth]);
+  const showLabels = availableWidth >= 90;
 
   const renderStatus = (message: string, variant: 'muted' | 'error' = 'muted') => (
     <div
@@ -170,7 +299,7 @@ export default function BarStacked({
         'flex h-full items-center justify-center rounded-xl border border-dashed border-border bg-card p-6 text-sm',
         variant === 'error' ? 'text-destructive' : 'text-muted-foreground',
       ].join(' ')}
-      style={{ height }}
+      style={{ minHeight: effectiveHeight }}
     >
       <span className="text-center">{message}</span>
     </div>
@@ -187,8 +316,7 @@ export default function BarStacked({
 
   return (
     <figure
-      className="relative flex h-full flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm"
-      style={{ height }}
+      className="relative flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm"
       aria-labelledby={titleId}
       aria-describedby={describedBy}
       role="group"
@@ -222,120 +350,99 @@ export default function BarStacked({
         </div>
       )}
 
-      <div className="relative mb-4">
-        <div className="pointer-events-none absolute bottom-2 right-0 text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground/50">
-          northeast in data
+      <div
+        ref={wrapperRef}
+        className={needsScroll ? 'relative -mx-4 overflow-x-auto px-4' : 'relative'}
+      >
+        <div
+          className="relative"
+          style={{ height: effectiveHeight, width: needsScroll ? `${Math.round(chartWidth)}px` : '100%' }}
+        >
+          <ResponsiveBar
+            data={data as any[]}
+            keys={seriesKeys}
+            indexBy={idxKey}
+            layout="horizontal"
+           groupMode="stacked"
+            indexScale={indexScale ?? { type: 'band', round: false, reverse: true }}
+            enableLabel
+            label={({ value }) => {
+              const n = Number(value);
+              if (!Number.isFinite(n) || n <= 3) return '';
+              return `${Math.round(n)}%`;
+            }}
+            labelSkipWidth={16}
+            labelSkipHeight={12}
+            labelTextColor={labelColor}
+            labelPosition="inside"
+            labelOffset={0}
+            margin={margin}
+            padding={barPadding}
+            colors={({ id }) => colorMap.get(String(id)) ?? bigColor}
+            borderRadius={0}
+            layers={barLayers}
+            axisBottom={{ legend: axisBottomLegend, legendPosition: 'middle', legendOffset: axisBottomLegendOffset }}
+            axisLeft={{
+              tickSize: 0,
+              tickPadding: 12,
+              tickValues: 'every 1',
+            }}
+            theme={{
+              labels: { text: { fontFamily: fontSans, fontWeight: 600, fontSize: labelFontSize, fill: labelColor } },
+              axis: {
+                domain: { line: { stroke: borderColor } },
+                ticks: { line: { stroke: borderColor }, text: { fill: mutedColor, fontFamily: fontSans, fontSize: axisFontSize } },
+                legend: { text: { fill: mutedColor, fontFamily: fontSans, fontSize: axisFontSize } },
+              },
+              grid: { line: { stroke: borderColor, strokeWidth: 1 } },
+              legends: { text: { fill: legendColor, fontFamily: fontSans, fontSize: legendFontSize } },
+              tooltip: {
+                container: {
+                  fontFamily: fontSans,
+                  border: `1px solid ${borderColor}`,
+                  background: tooltipBg,
+                  color: legendColor,
+                },
+              },
+            }}
+            legends={useInlineLegend ? [] : legendConfig}
+            tooltip={({ id, value, indexValue, data: datum }) => {
+              const n = Number((datum as any)?.[id as any] ?? value);
+              return (
+                <div
+                  style={{
+                    background: tooltipBg,
+                    padding: '8px 10px',
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: 6,
+                    color: legendColor,
+                    fontFamily: fontSans,
+                    fontSize: 12,
+                  }}
+                >
+                  <strong>{String(id)}</strong>: {Number.isFinite(n) ? Math.round(n) : '-'}%<br />
+                  <small>{String(indexValue)}</small>
+                </div>
+              );
+            }}
+            role="img"
+            ariaLabel="Stacked horizontal bar chart showing share of tea area by grower type and district"
+            ariaLabelledBy={titleId}
+            ariaDescribedBy={describedBy}
+          />
         </div>
       </div>
-
-      <div className="flex-1">
-        <ResponsiveBar
-          data={data as any[]}
-          keys={seriesKeys}
-          indexBy={idxKey}
-          layout="horizontal"
-          groupMode="stacked"
-          indexScale={indexScale ?? { type: 'band', round: false, reverse: true }}
-          enableLabel
-          label={({ id, value, data }) => {
-            const n = Number((data as Record<string, unknown>)?.[id as string] ?? value);
-            if (!Number.isFinite(n) || n <= 5) return '';
-            return `${Math.round(n)}%`;
-          }}
-          labelSkipWidth={18}
-          labelSkipHeight={12}
-          labelTextColor={labelColor}
-          labelPosition="end"
-          labelOffset={-32}
-          margin={{ top: 64, right: 130, bottom: 56, left: 132 }}
-          padding={0.05}
-          colors={({ id }) => colorMap.get(String(id)) ?? bigColor}
-          borderRadius={0}
-          layers={['grid', 'axes', 'bars', 'labels', 'markers', 'legends']}
-          axisBottom={{ legend: 'Share of Tea Area (%)', legendPosition: 'middle', legendOffset: 40 }}
-          axisLeft={{
-            legend: '',
-            legendPosition: 'middle',
-            legendOffset: -110,
-            tickTextColor: mutedColor,
-            tickPadding: 6,
-            renderTick: (props: any) => {
-              const { x, y, value, textAnchor, dominantBaseline } = props;
-              const isAssam = String(value).toLowerCase().includes('assam');
-              const labelX = typeof x === 'number' ? x - 8 : x;
-              return (
-                <text
-                  key={value}
-                  x={labelX}
-                  y={y}
-                  textAnchor={textAnchor}
-                  dominantBaseline={dominantBaseline}
-                  fontFamily={fontSans}
-                  fontSize={12}
-                  fontWeight={isAssam ? 700 : 500}
-                  fill={mutedColor}
-                >
-                  {String(value)}
-                </text>
-              );
-            },
-          }}
-          theme={{
-            labels: { text: { fontFamily: fontSans, fontWeight: 600, fill: labelColor } },
-            axis: {
-              domain: { line: { stroke: borderColor } },
-              ticks: { line: { stroke: borderColor }, text: { fill: mutedColor, fontFamily: fontSans, fontSize: 12 } },
-              legend: { text: { fill: mutedColor, fontFamily: fontSans, fontSize: 12 } },
-            },
-            grid: { line: { stroke: borderColor, strokeWidth: 1 } },
-            legends: { text: { fill: legendColor, fontFamily: fontSans, fontSize: 13 } },
-            tooltip: {
-              container: {
-                fontFamily: fontSans,
-                border: `1px solid ${borderColor}`,
-                background: tooltipBg,
-                color: legendColor,
-              },
-            },
-          }}
-          legends={[
-            {
-              dataFrom: 'keys',
-              anchor: 'top-left',
-              direction: 'row',
-              translateY: -36,
-              itemWidth: 140,
-              itemHeight: 18,
-              itemsSpacing: 8,
-              symbolSize: 14,
-            },
-          ]}
-          tooltip={({ id, value, indexValue, data: datum }) => {
-            const n = Number((datum as any)?.[id as any] ?? value);
-            return (
-              <div
-                style={{
-                  background: tooltipBg,
-                  padding: '8px 10px',
-                  border: `1px solid ${borderColor}`,
-                  borderRadius: 6,
-                  color: legendColor,
-                  fontFamily: fontSans,
-                  fontSize: 12,
-                }}
-              >
-                <strong>{String(id)}</strong>: {Number.isFinite(n) ? Math.round(n) : '-'}%<br />
-                <small>{String(indexValue)}</small>
-              </div>
-            );
-          }}
-          role="img"
-          ariaLabel="Stacked horizontal bar chart showing share of tea area by grower type and district"
-          ariaLabelledBy={titleId}
-          ariaDescribedBy={describedBy}
-        />
-      </div>
-      <div className="pointer-events-none absolute bottom-4 right-6 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground/60">
+      {useInlineLegend && seriesKeys.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-muted-foreground">
+          {seriesKeys.map((key) => (
+            <span key={key} className="inline-flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full" style={{ background: colorMap.get(key) }} aria-hidden="true" />
+              <span>{key}</span>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="mt-3 flex justify-end text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground/60">
         Northeast in Data
       </div>
 
