@@ -135,11 +135,24 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   };
 
   if (isPlaygroundLayout) {
+    if (!article.playgroundContent) {
+      return (
+        <article className="container mx-auto max-w-3xl px-6 py-16 text-center text-muted-foreground">
+          <p>This story is configured for the playground layout but is missing playground content.</p>
+        </article>
+      );
+    }
+
     return (
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-        <TeaGrowersPlayground updated={format(new Date(article.updatedAt), 'MMMM yyyy')} />
+        <TeaGrowersPlayground
+          title={article.title}
+          subtitle={article.subtitle}
+          playground={article.playgroundContent}
+          updated={format(new Date(article.updatedAt), 'MMMM yyyy')}
+        />
       </>
     );
   }

@@ -54,7 +54,8 @@ export interface Article {
     value: string;
     label: string;
     change: 'increase' | 'decrease';
-  }
+  };
+  playgroundContent?: TeaPlaygroundContent;
 }
 
 export type VisualType = 'bar' | 'line' | 'table';
@@ -85,4 +86,34 @@ export interface SiteConfig {
         twitter?: string;
         github?: string;
     };
+}
+
+export type TeaPlaygroundSection =
+  | {
+      type: 'prose';
+      paragraphs: string[];
+    }
+  | {
+      type: 'figure';
+      kicker: string;
+      title: string;
+      description: string;
+      chart: {
+        csvUrl: string;
+        height?: number;
+        indexScale?: any;
+      };
+      source: {
+        label: string;
+        url: string;
+      };
+    };
+
+export interface TeaPlaygroundContent {
+  hero: {
+    kicker: string;
+    deck: string;
+    organization: string;
+  };
+  sections: TeaPlaygroundSection[];
 }
