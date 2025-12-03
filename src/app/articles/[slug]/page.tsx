@@ -13,15 +13,18 @@ import TeaGrowersPlayground from '@/components/articles/TeaGrowersPlayground';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002';
 
+type RouteParams = { slug: string };
+
 type Props = {
-  params: { slug: string }
-}
+  params: Promise<RouteParams>;
+};
 
 export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const article = getArticleBySlug(params.slug);
+  const { slug } = await params;
+  const article = getArticleBySlug(slug);
 
   if (!article) {
     return {
@@ -73,8 +76,9 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = getArticleBySlug(params.slug);
+export default async function ArticlePage({ params }: { params: Promise<RouteParams> }) {
+  const { slug } = await params;
+  const article = getArticleBySlug(slug);
 
   if (!article) {
     notFound();

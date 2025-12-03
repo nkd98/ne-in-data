@@ -1,12 +1,17 @@
 
 'use client';
+
+import { useMemo } from 'react';
+import dynamic from 'next/dynamic';
+import type { EChartsOption } from 'echarts';
 import type { Article } from '@/lib/types';
 import { getTopics } from '@/lib/data';
 import { format } from 'date-fns';
 import { ArrowRight, TrendingUp, TrendingDown } from 'lucide-react';
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+
+const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
 const chartData = [
   { name: 'A', value: 400 },
@@ -18,26 +23,57 @@ const chartData = [
 ];
 
 function DataPreview({ topicColor, type }: { topicColor: string, type: 'line' | 'bar' }) {
-    const renderChart = () => {
+    const option = useMemo<EChartsOption>(() => {
+        const categories = chartData.map((d) => d.name);
+        const values = chartData.map((d) => d.value);
+        const xAxis = {
+            type: 'category' as const,
+            data: categories,
+            show: false,
+        };
+        const yAxis = {
+            type: 'value' as const,
+            show: false,
+        };
+
         if (type === 'line') {
-            return (
-                <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                    <Line type="monotone" dataKey="value" stroke={topicColor} strokeWidth={2} dot={false} />
-                </LineChart>
-            );
+            return {
+                tooltip: { show: false },
+                grid: { left: 0, right: 0, top: 10, bottom: 10 },
+                xAxis,
+                yAxis,
+                series: [
+                    {
+                        type: 'line',
+                        data: values,
+                        smooth: true,
+                        showSymbol: false,
+                        lineStyle: { color: topicColor, width: 2 },
+                        areaStyle: { color: topicColor, opacity: 0.15 },
+                    },
+                ],
+            };
         }
-        return (
-            <BarChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                <Bar dataKey="value" fill={topicColor} />
-            </BarChart>
-        );
-    };
+
+        return {
+            tooltip: { show: false },
+            grid: { left: 0, right: 0, top: 10, bottom: 10 },
+            xAxis,
+            yAxis,
+            series: [
+                {
+                    type: 'bar',
+                    data: values,
+                    barWidth: '50%',
+                    itemStyle: { color: topicColor, borderRadius: [4, 4, 0, 0] },
+                },
+            ],
+        };
+    }, [topicColor, type]);
 
   return (
     <div className="aspect-video w-full h-full">
-      <ResponsiveContainer width="100%" height="100%">
-        {renderChart()}
-      </ResponsiveContainer>
+      <ReactECharts option={option} notMerge lazyUpdate style={{ width: '100%', height: '100%' }} />
     </div>
   );
 }

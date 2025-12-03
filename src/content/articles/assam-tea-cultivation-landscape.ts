@@ -72,7 +72,7 @@ const article: Article = {
     hero: {
       kicker: 'Insight',
       deck: "A look at how Assam's tea cultivation is built on thousands of small growers, yet still dominated by large estates.",
-      organization: 'Northeast India Data'
+      organization: 'Northeast in Data'
     },
     sections: [
       {

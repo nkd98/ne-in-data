@@ -12,7 +12,7 @@ const article: Article = {
   readingTime: 7,
   seo: {
     description: "In-depth analysis of Assam tea exports, examining historical trends, market challenges, and future prospects for the industry.",
-    canonical: null
+    canonical: undefined,
   },
   heroImage: { id: 'assam-tea-plantation', alt: 'Lush tea plantations in Assam with workers plucking tea leaves' },
   blocks: [
@@ -54,7 +54,7 @@ const article: Article = {
     }
   ],
   relatedArticleIds: ['nagaland-agricultural-reforms'],
-  metric: { value: '52%', label: "of India's tea production", change: 'stable' }
+  metric: { value: '52%', label: "of India's tea production", change: 'increase' }
 };
 
 export default article;

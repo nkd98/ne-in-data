@@ -1,45 +1,94 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import type { EChartsOption } from 'echarts';
 import type { Visual } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Copy, Link as LinkIcon, BarChart, LineChart, Table } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Bar, BarChart as RechartsBarChart, Line, LineChart as RechartsLineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
+const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
+
+const parseValue = (value: unknown) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/,/g, '').replace(/%/g, '').trim();
+    const num = Number(cleaned);
+    return Number.isFinite(num) ? num : 0;
+  }
+  return 0;
+};
+
+const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOption => {
+  const spec = visual.spec || {};
+  const rows: any[] = Array.isArray(spec.data) ? spec.data : [];
+  const categories = rows.map((row) => String(row?.[spec.x] ?? ''));
+  const values = rows.map((row) => parseValue(row?.[spec.y]));
+  const primaryColor = 'hsl(var(--primary))';
+  const axisColor = 'hsl(var(--muted-foreground))';
+  const borderColor = 'hsl(var(--border))';
+
+  return {
+    tooltip: { trigger: 'axis' },
+    grid: { top: 32, right: 16, bottom: 56, left: 64 },
+    xAxis: {
+      type: 'category' as const,
+      data: categories,
+      axisLabel: { color: axisColor },
+      axisLine: { lineStyle: { color: borderColor } },
+      axisTick: { alignWithLabel: true },
+    },
+    yAxis: {
+      type: 'value' as const,
+      name: spec.yLabel,
+      nameLocation: 'middle',
+      nameGap: 46,
+      axisLabel: { color: axisColor },
+      axisLine: { lineStyle: { color: borderColor } },
+      splitLine: { lineStyle: { color: borderColor, opacity: 0.4 } },
+    },
+    series: [
+      {
+        name: spec.yLabel || spec.y,
+        type,
+        data: values,
+        smooth: type === 'line',
+        symbol: type === 'line' ? 'circle' : 'none',
+        symbolSize: 8,
+        itemStyle: { color: primaryColor },
+        lineStyle: type === 'line' ? { width: 3 } : undefined,
+        areaStyle: type === 'line' ? { opacity: 0.08, color: primaryColor } : undefined,
+        barMaxWidth: type === 'bar' ? 40 : undefined,
+      },
+    ],
+  };
+};
 
 function RenderVisual({ visual }: { visual: Visual }) {
     switch (visual.type) {
         case 'line':
             return (
-                <ChartContainer config={{}} className="h-[300px] w-full md:h-[400px]">
-                    <RechartsLineChart data={visual.spec.data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey={visual.spec.x} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                        <YAxis 
-                            label={{ value: visual.spec.yLabel, angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))' }}
-                            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                        />
-                        <Tooltip content={<ChartTooltipContent />} />
-                        <Line type="monotone" dataKey={visual.spec.y} stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--primary))' }} />
-                    </RechartsLineChart>
-                </ChartContainer>
+                <div className="h-[300px] w-full md:h-[400px]">
+                    <ReactECharts
+                        option={buildCartesianOption(visual, 'line')}
+                        notMerge
+                        lazyUpdate
+                        style={{ height: '100%', width: '100%' }}
+                    />
+                </div>
             );
         case 'bar':
             return (
-                <ChartContainer config={{}} className="h-[300px] w-full md:h-[400px]">
-                    <RechartsBarChart data={visual.spec.data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey={visual.spec.x} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
-                        <YAxis 
-                          label={{ value: visual.spec.yLabel, angle: -90, position: 'insideLeft', fill: 'hsl(var(--foreground))' }}
-                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                        />
-                        <Tooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey={visual.spec.y} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </RechartsBarChart>
-                </ChartContainer>
+                <div className="h-[300px] w-full md:h-[400px]">
+                    <ReactECharts
+                        option={buildCartesianOption(visual, 'bar')}
+                        notMerge
+                        lazyUpdate
+                        style={{ height: '100%', width: '100%' }}
+                    />
+                </div>
             );
         case 'table':
             return (

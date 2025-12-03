@@ -31,20 +31,18 @@ export default function TeaGrowersPlayground({ title, subtitle, updated, playgro
     return (
       <figure
         key={`figure-${index}`}
-        className="space-y-6 rounded-[32px] border border-border bg-card/80 p-6 shadow-sm lg:p-10"
+        className="space-y-6"
       >
         <div className="space-y-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{section.kicker}</p>
           <h2 className="text-2xl font-semibold text-foreground">{section.title}</h2>
           <p className="text-base text-muted-foreground">{section.description}</p>
         </div>
-        <div className="rounded-2xl border border-border/80 bg-background/70 p-4">
-          <BarStacked
-            csvUrl={section.chart.csvUrl}
-            height={section.chart.height}
-            indexScale={section.chart.indexScale}
-          />
-        </div>
+        <BarStacked
+          csvUrl={section.chart.csvUrl}
+          height={section.chart.height}
+          indexScale={section.chart.indexScale}
+        />
         <figcaption className="text-right text-sm text-muted-foreground">
           <a
             className="font-medium text-foreground underline decoration-dotted underline-offset-2"
