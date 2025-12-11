@@ -3,7 +3,6 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/components/theme-provider";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 
@@ -67,20 +66,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(bodyFont.variable, displayFont.variable)} suppressHydrationWarning>
-      <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Nav />
-          <main>
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
-        </ThemeProvider>
+      <body className="bg-background text-foreground">
+        <Nav />
+        <main>
+          {children}
+        </main>
+        <Footer />
+        <Toaster />
       </body>
     </html>
   );

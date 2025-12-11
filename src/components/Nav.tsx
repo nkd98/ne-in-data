@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
-import { ThemeToggle } from './theme-toggle';
 import { Logo } from './logo';
 import React from 'react';
 
@@ -53,7 +52,6 @@ export function Nav() {
             </nav>
         </div>
         <div className="flex items-center gap-2">
-            <ThemeToggle />
             <div className="md:hidden">
               {isClient && (
                   <Sheet>

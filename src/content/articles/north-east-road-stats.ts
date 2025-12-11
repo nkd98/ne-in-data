@@ -1,22 +1,23 @@
 import type { Article } from '@/lib/types';
 
 const article: Article = {
-  slug: 'assam-tea-cultivation-landscape',
-  title: "Who grows Assam’s tea, and who controls the tea land?",
-  subtitle:  " A look at how Assam's tea cultivation is built on thousands of small growers, yet still dominated by large estates.",
+  slug: 'north-east-road-stats',
+  title: "How connected in north-east India is by road?",
+  subtitle:  "A look at the road connectivity across the north-eastern states of India, examining the extent and quality of the road network.",
   authorIds: ['niruj'],
-  topicIds: ['agriculture'],
+  topicIds: ['infastructure'],
   status: 'published',
   publishedAt: '2025-11-01',
   updatedAt: '2025-11-01',
   readingTime: 5,
   seo: {
-    description: "A look at how Assam's tea cultivation is built on thousands of small growers, yet still dominated by large estates.",
+    description: "A look at the road connectivity across the north-eastern states of India, examining the extent and quality of the road network.",
   },
   heroImage: {
     id: 'assam-tea-landscape',
     alt: 'Aerial view of tea plantations showing both small holdings and large estates in Assam'
   },
+  layout: 'tea-playground',
   blocks: [
     {
       type: 'intro',

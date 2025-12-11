@@ -272,14 +272,9 @@ export default function BarStacked({
   const computedContentHeight = rowHeight * Math.max(1, barCount);
   const effectiveHeight = useMemo(() => {
     const minNeeded = Math.max(280, computedContentHeight + margin.top + margin.bottom);
-    if (typeof height === 'number') {
-      if (chartWidth && chartWidth < 520) {
-        return Math.max(height, minNeeded);
-      }
-      return height;
-    }
-    return minNeeded;
-  }, [height, computedContentHeight, margin, chartWidth]);
+    const baseHeight = typeof height === 'number' ? height : minNeeded;
+    return Math.max(baseHeight, minNeeded);
+  }, [height, computedContentHeight, margin]);
   const showLabels = availableWidth >= 90;
   const yAxisInverse = typeof indexScale?.reverse === 'boolean' ? indexScale.reverse : true;
   const categories = useMemo(() => data.map((row) => String(row[idxKey] ?? '')), [data, idxKey]);

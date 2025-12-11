@@ -86,7 +86,7 @@ export default async function ArticlePage({ params }: { params: Promise<RoutePar
 
   const authors = article.authorIds.map(id => getAuthorById(id)).filter(Boolean) as Author[];
   const heroImage = PlaceHolderImages.find(img => img.id === article.heroImage.id);
-  const isPlaygroundLayout = article.layout === 'tea-playground';
+  const playground = article.playgroundContent;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -138,15 +138,7 @@ export default async function ArticlePage({ params }: { params: Promise<RoutePar
     ],
   };
 
-  if (isPlaygroundLayout) {
-    if (!article.playgroundContent) {
-      return (
-        <article className="container mx-auto max-w-3xl px-6 py-16 text-center text-muted-foreground">
-          <p>This story is configured for the playground layout but is missing playground content.</p>
-        </article>
-      );
-    }
-
+  if (playground) {
     return (
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -154,7 +146,7 @@ export default async function ArticlePage({ params }: { params: Promise<RoutePar
         <TeaGrowersPlayground
           title={article.title}
           subtitle={article.subtitle}
-          playground={article.playgroundContent}
+          playground={playground}
           updated={format(new Date(article.updatedAt), 'MMMM yyyy')}
         />
       </>

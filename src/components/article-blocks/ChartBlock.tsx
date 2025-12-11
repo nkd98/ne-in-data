@@ -131,10 +131,10 @@ export function ChartBlock({ visual, visualId }: Props) {
   if (!resolvedVisual) return <div>Chart configuration missing — pass a `visual` prop from the server or a valid visualId.</div>;
 
   return (
-    <figure style={{ maxWidth: 900, margin: '24px auto', padding: '0 12px' }}>
-      <figcaption style={{ marginBottom: 8 }}>
-        <div style={{ fontSize: 18, fontWeight: 600 }}>{resolvedVisual.title}</div>
-        {resolvedVisual.caption && <div style={{ color: '#555' }}>{resolvedVisual.caption}</div>}
+    <figure className="not-prose mx-auto my-6 max-w-4xl px-3">
+      <figcaption className="mb-2">
+        <div className="text-lg font-semibold text-foreground">{resolvedVisual.title}</div>
+        {resolvedVisual.caption && <div className="text-sm text-muted-foreground">{resolvedVisual.caption}</div>}
       </figcaption>
 
       {error ? (
@@ -146,7 +146,7 @@ export function ChartBlock({ visual, visualId }: Props) {
       )}
 
       {resolvedVisual.source && (
-        <figcaption style={{ marginTop: 8, fontSize: 13, color: '#555' }}>
+        <figcaption className="mt-2 text-sm text-muted-foreground">
           <b>Source:</b>{' '}
           {resolvedVisual.source.url ? (
             <a href={resolvedVisual.source.url} target="_blank" rel="noreferrer">
