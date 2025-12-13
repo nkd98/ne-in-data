@@ -13,8 +13,145 @@ const topics: Topic[] = [
   { id: 'infrastructure', slug: 'infrastructure', name: 'Infrastructure', description: 'Development of infrastructure like roads, bridges, and power.', imageId: 'topic-infrastructure', color: 'topic-indigo' },
 ];
 
+
 const visuals: Visual[] = [
     {
+      id: 'ne-ger-states',
+      title: 'Gross Enrolment Ratio by Stage and State (North-East)',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_states.csv',
+        x: 'states',
+        y: 'ger',
+        facetField: 'stage',
+        facetOrder: [
+          'pre_primary_class2_t',
+          'class3_class5_t',
+          'class5_class8_t',
+          'class9_class12_t',
+          'high_education_t'
+        ],
+        highlightCategories: ['All India'],
+        colors: {
+          default: '#2B3C63',
+          highlight: '#c33c54'
+        },
+        categoryLabels: {
+          'Arunachal Pradesh': 'Arunachal P.'
+        },
+        facetHeight: 130,
+        facetGap: 28,
+        yLabel: 'Gross Enrolment Ratio (GER)',
+        height: 720
+      },
+      caption: 'North-East states lead early-grade enrolment, but by higher education GER levels drop across the region.',
+      units: 'Gross Enrolment Ratio',
+      coverage: 'North-East India vs All India',
+      source: { 
+        name: 'UDISE+/AISHE (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_states.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['education', 'ger', 'north-east', 'states']
+    },
+    {
+      id: 'ne-ger-stage',
+      title: 'Gross Enrolment Ratio by Stage (North-East vs India)',
+      type: 'line',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_comp_ind_vs_ne.csv',
+        x: 'stage',
+        y: 'ger',
+        seriesField: 'region',
+        seriesValueFields: {
+          'All India': 'All India',
+          'Northeast': 'ger',
+        },
+        seriesLabels: {
+          'All India': 'All India',
+          'Northeast': 'North-East',
+        },
+        categoryOrder: [
+          'pre_primary_class2_t',
+          'class3_class5_t',
+          'class5_class8_t',
+          'class9_class12_t',
+          'high_education_t',
+        ],
+        colors: {
+          'All India': '#2B3C63',
+          'Northeast': '#0FA77E',
+        },
+        yLabel: 'Gross Enrolment Ratio',
+      },
+      caption: 'North-East India outperforms the all-India average in early grades but falls behind by higher education.',
+      units: 'Gross Enrolment Ratio',
+      coverage: 'North-East vs All India',
+      source: { 
+        name: 'UDISE+/AISHE (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_comp_ind_vs_ne.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['education', 'ger', 'north-east', 'india']
+    },
+    {
+      id: 'ne-ger-distribution',
+      title: 'GER distribution across states by education stage',
+      type: 'scatter',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_dist_states.csv',
+        x: 'ger',
+        y: 'stage_key',
+        yCategoryOrder: [
+          'pre_primary_class2_t',
+          'class3_class5_t',
+          'class5_class8_t',
+          'class9_class12_t',
+          'high_education_t'
+        ],
+        yCategoryLabels: {
+          high_education_t: 'Higher education',
+          class9_class12_t: 'Class 9–12',
+          class5_class8_t: 'Class 6–8',
+          class3_class5_t: 'Class 3–5',
+          pre_primary_class2_t: 'Pre-primary–Class 2'
+        },
+        colorField: 'states',
+        colors: {
+          default: '#6B7280',
+          'All India': '#111111',
+          'Arunachal Pradesh': '#6C5B7B',
+          Assam: '#E86A33',
+          Manipur: '#2A9D8F',
+          Meghalaya: '#C06C84',
+          Mizoram: '#355070',
+          Nagaland: '#E9C46A',
+          Sikkim: '#4CAF50',
+          Tripura: '#3A86FF'
+        },
+        symbolField: 'is_all_india',
+        symbolMap: { true: 'star', false: 'circle' },
+        symbolSizeMap: { true: 12, false: 13 },
+        labelField: 'states',
+        pointSize: 13,
+        jitterPx: 0, // horizontal jitter in pixels
+        jitterYPx: 8, // vertical jitter in pixels
+        xLabel: 'Gross Enrolment Ratio (GER)',
+        yLabel: 'Education stage',
+        height: 560
+      },
+      caption: 'Each dot is a state; X markers show all-India GER for that stage.',
+      units: 'Gross Enrolment Ratio',
+      coverage: 'North-East states vs All India',
+      source: { 
+        name: 'UDISE+/AISHE (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_dist_states.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['education', 'ger', 'north-east', 'states']
+    },
+    {
+      // Tea Growers Visuals
       id: 'tea-growers-summary',
       title: 'Statewide Comparison of Small vs Big Tea Growers',
       type: 'bar',
@@ -116,6 +253,154 @@ const visuals: Visual[] = [
       lastUpdated: '2025-10-30',
       tags: ['agriculture', 'exports', 'tea', 'assam']
     },
+
+    {
+      // Road Stats Visuals
+      id: 'road-density-ne',
+      title: 'Road Density in North-East India (2023)',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_road_density_clean.csv',
+        x: 'state',
+        stacks: ['Urban', 'Rural'],
+        stackField: 'area',
+        valueField: 'road_density',
+        stacked: false,
+        categoryOrder: [
+          'Arunachal Pradesh',
+          'Assam',
+          'Manipur',
+          'Meghalaya',
+          'Mizoram',
+          'Nagaland',
+          'Sikkim',
+          'Tripura',
+          'INDIA'
+        ],
+        stackLabels: {
+          'Urban': 'Urban Roads',
+          'Rural': 'Rural Roads'
+        },
+        colors: {
+          'Urban': '#2B3C63',
+          'Rural': '#0FA77E'
+        },
+        yLabel: 'Road density (km per 100 sq km)'
+      },
+      caption: 'Side-by-side comparison of urban and rural road density across North-East states.',
+      units: 'km per 100 sq km',
+      coverage: 'North-East India',
+      source: { 
+        name: 'Basic Road Statistics of India, 2019-20', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_road_density_clean.csv' 
+      },
+      lastUpdated: '2024-04-01',
+      tags: ['infrastructure', 'roads', 'ne', 'summary']
+    },
+    {// Road Stats Visuals
+      id: 'road-len-ne',
+      title: 'Road Length per 1,000 People (North-East, 2023)',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_road_length_per_1000pop_clean.csv',
+        x: 'state',
+        stacks: ['Urban', 'Rural'],
+        stackField: 'area',
+        valueField: 'road_length_per_1000_pop',
+        stacked: false,
+        categoryOrder: [
+          'Arunachal Pradesh',
+          'Assam',
+          'Manipur',
+          'Meghalaya',
+          'Mizoram',
+          'Nagaland',
+          'Sikkim',
+          'Tripura',
+          'INDIA'
+        ],
+        stackLabels: {
+          'Urban': 'Urban Roads',
+          'Rural': 'Rural Roads'
+        },
+        colors: {
+          'Urban': '#2B3C63',
+          'Rural': '#0FA77E'
+        },
+        yLabel: 'Road length (km per 1,000 people)'
+      },
+      caption: 'Side-by-side comparison of urban and rural road length per 1,000 people across North-East states.',
+      units: 'km per 1,000 people',
+      coverage: 'North-East India',
+      source: { 
+        name: 'Basic Road Statistics of India, 2019-20', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_road_length_per_1000pop_clean.csv' 
+      },
+      lastUpdated: '2024-04-01',
+      tags: ['infrastructure', 'roads', 'ne', 'summary']
+    },
+    {// Road Stats Visuals
+      id: 'road-surfaced-len-ne',
+      title: 'Surfaced vs Total Road Length (North-East, 2023)',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_total_vs_surfaced_road_length_clean.csv',
+        x: 'state',
+        stacks: ['Total', 'Surfaced'],
+        stackField: 'road_type',
+        valueField: 'road_length_km',
+        stacked: false,
+        categoryOrder: [
+          'Arunachal Pradesh',
+          'Assam',
+          'Manipur',
+          'Meghalaya',
+          'Mizoram',
+          'Nagaland',
+          'Sikkim',
+          'Tripura',
+          'INDIA'
+        ],
+        stackLabels: {
+          'Total': 'Total',
+          'Surfaced': 'Surfaced'
+        },
+        colors: {
+          'Total': '#2B3C63',
+          'Surfaced': '#0FA77E'
+        },
+        yLabel: 'Road length (km)'
+      },
+      caption: 'Side-by-side comparison of total vs surfaced road length across North-East states.',
+      units: 'km',
+      coverage: 'North-East India',
+      source: { 
+        name: 'Basic Road Statistics of India, 2019-20', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_total_vs_surfaced_road_length_clean.csv' 
+      },
+      lastUpdated: '2024-04-01',
+      tags: ['infrastructure', 'roads', 'ne', 'summary']
+    },
+
+    {
+      id: 'education-ger-trend',
+      title: 'Gross Enrolment Ratio, North-East (Year range)',
+      type: 'line',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_comp_ind_vs_ne.csv', // or inline data array
+        x: 'year',
+        y: 'ger',
+        yLabel: 'GER (%)'
+      },
+      caption: 'GER over time in the North-East.',
+      units: '%',
+      coverage: 'North-East India',
+      source: { name: 'Source name', url: 'https://…/your.csv' },
+      lastUpdated: '2024-12-01',
+      tags: ['education', 'ger', 'ne']
+   },
+
+
     {
       id: 'assam-employment-rate',
       title: 'Employment Rate in Assam (2011-2024)',

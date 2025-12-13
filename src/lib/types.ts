@@ -57,7 +57,7 @@ export interface Article {
   playgroundContent?: TeaPlaygroundContent;
 }
 
-export type VisualType = 'bar' | 'line' | 'table';
+export type VisualType = 'bar' | 'line' | 'table' | 'scatter';
 
 export interface Visual {
   id: string;

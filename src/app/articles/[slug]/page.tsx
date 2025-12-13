@@ -1,15 +1,11 @@
-import { getArticleBySlug, getArticles, getAuthorById, getVisualById } from '@/lib/data';
+import { getArticleBySlug, getArticles, getAuthorById } from '@/lib/data';
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { BlockRenderer } from '@/components/article-blocks/BlockRenderer';
 import { RelatedArticles } from '@/components/article-blocks/RelatedArticles';
-import { Calendar, Clock } from 'lucide-react';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Author } from '@/lib/types';
-import TeaGrowersPlayground from '@/components/articles/TeaGrowersPlayground';
+import ArticlePlaygroundLayout from '@/components/layouts/ArticlePlaygroundLayout';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002';
 
@@ -138,92 +134,18 @@ export default async function ArticlePage({ params }: { params: Promise<RoutePar
     ],
   };
 
-  if (playground) {
-    return (
-      <>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-        <TeaGrowersPlayground
-          title={article.title}
-          subtitle={article.subtitle}
-          playground={playground}
-          updated={format(new Date(article.updatedAt), 'MMMM yyyy')}
-        />
-      </>
-    );
-  }
-
   return (
-    <article className="py-8 md:py-16">
+    <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <header className="container mx-auto max-w-4xl px-4 text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
-          {article.title}
-        </h1>
-        
-        <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-2 overflow-hidden">
-              {authors.map(author => author && (
-                <Avatar key={author.id} className="inline-block h-8 w-8 ring-2 ring-background">
-                  <AvatarImage src={author.avatarUrl} alt={author.name} />
-                  <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-              ))}
-            </div>
-            <div className="text-sm font-medium text-foreground">
-              {authors.map(a => a?.name).join(', ')}
-            </div>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-             <div className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />
-                <span>{format(new Date(article.publishedAt), 'MMM d, yyyy')}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />
-                <span>{article.readingTime} min read</span>
-            </div>
-          </div>
-        </div>
-
-        <p className="mt-8 text-lg text-muted-foreground md:text-xl">
-          {article.subtitle}
-        </p>
-
-      </header>
-
-      {heroImage && (
-        <div className="container mx-auto mt-8 max-w-6xl px-4 md:mt-12">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg shadow-lg">
-                <Image
-                    src={heroImage.imageUrl}
-                    alt={article.heroImage.alt}
-                    fill
-                    className="object-cover"
-                    priority
-                    data-ai-hint={heroImage.imageHint}
-                />
-            </div>
-        </div>
-      )}
-
-      <div className="prose prose-lg mx-auto mt-8 max-w-4xl px-4 dark:prose-invert md:mt-12 lg:prose-xl prose-h2:font-headline prose-h3:font-headline prose-p:font-body prose-a:text-primary hover:prose-a:text-primary/80">
-        {/* Resolve visuals server-side and attach to chart/table blocks so client ChartBlock/TableBlock get the config immediately */}
-        {(() => {
-          const blocksWithVisuals = article.blocks.map((b: any) => {
-            if (b?.type === 'chart' || b?.type === 'table') {
-              return { ...b, visual: b.visualId ? getVisualById(b.visualId) : undefined };
-            }
-            return b;
-          });
-          return <BlockRenderer blocks={blocksWithVisuals} />;
-        })()}
-      </div>
-
+      <ArticlePlaygroundLayout
+        title={article.title}
+        subtitle={article.subtitle}
+        playground={playground}
+        blocks={article.blocks}
+        updated={format(new Date(article.updatedAt), 'MMMM yyyy')}
+      />
       <RelatedArticles relatedArticleIds={article.relatedArticleIds} currentSlug={article.slug} />
-
-    </article>
+    </>
   );
 }

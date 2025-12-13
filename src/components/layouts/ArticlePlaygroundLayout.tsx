@@ -1,7 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { TeaPlaygroundContent, TeaPlaygroundSection } from '@/lib/types';
+import type { Block, TeaPlaygroundContent, TeaPlaygroundSection } from '@/lib/types';
+import { BlockRenderer } from '@/components/article-blocks/BlockRenderer';
 
 const BarStacked = dynamic(() => import('@/components/charts/BarStacked'), { ssr: false });
 
@@ -9,10 +10,28 @@ type Props = {
   title: string;
   subtitle?: string;
   updated: string;
-  playground: TeaPlaygroundContent;
+  playground?: TeaPlaygroundContent;
+  blocks?: Block[];
+  kicker?: string;
+  organization?: string;
+  deck?: string;
 };
 
-export default function TeaGrowersPlayground({ title, subtitle, updated, playground }: Props) {
+export default function ArticlePlaygroundLayout({
+  title,
+  subtitle,
+  updated,
+  playground,
+  blocks = [],
+  kicker = 'Insight',
+  organization = 'Northeast in Data',
+  deck,
+}: Props) {
+  const hero = playground?.hero ?? {
+    kicker,
+    deck: deck || subtitle || '',
+    organization,
+  };
 
   const renderSection = (section: TeaPlaygroundSection, index: number) => {
     if (section.type === 'prose') {
@@ -62,7 +81,7 @@ export default function TeaGrowersPlayground({ title, subtitle, updated, playgro
       <header className="border-b border-border bg-card/40">
         <div className="container mx-auto flex max-w-5xl flex-col gap-4 px-6 py-12">
           <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            {playground.hero.kicker}
+            {hero.kicker}
           </div>
           <div className="space-y-6">
             <div className="space-y-4">
@@ -70,11 +89,11 @@ export default function TeaGrowersPlayground({ title, subtitle, updated, playgro
                 {title}
               </h1>
               <p className="text-lg text-muted-foreground md:text-xl">
-                {playground.hero.deck || subtitle}
+                {hero.deck || subtitle}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              <span>{playground.hero.organization}</span>
+              <span>{hero.organization}</span>
               <span className="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1">
                 Updated {updated}
               </span>
@@ -83,9 +102,15 @@ export default function TeaGrowersPlayground({ title, subtitle, updated, playgro
         </div>
       </header>
 
-      <article className="container mx-auto max-w-5xl space-y-14 px-6 py-12 md:space-y-20 md:py-16">
-        {playground.sections.map((section, index) => renderSection(section, index))}
-      </article>
+      {playground ? (
+        <article className="container mx-auto max-w-5xl space-y-14 px-6 py-12 md:space-y-20 md:py-16">
+          {playground.sections.map((section, index) => renderSection(section, index))}
+        </article>
+      ) : (
+        <article className="container mx-auto max-w-4xl space-y-10 px-6 py-12 md:space-y-14 md:py-16">
+          {blocks.length > 0 ? <BlockRenderer blocks={blocks} /> : <p className="text-muted-foreground">No content available.</p>}
+        </article>
+      )}
     </main>
   );
 }
