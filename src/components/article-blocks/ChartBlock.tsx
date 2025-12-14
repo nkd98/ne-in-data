@@ -140,6 +140,13 @@ export function ChartBlock({ visual, visualId }: Props) {
       jitterPx,
       jitterYPx,
       symbolSizeMap,
+      area,
+      meanField,
+      binStartField,
+      binEndField,
+      barGap,
+      barCategoryGap,
+      barBorder,
     } = resolvedVisual.spec || {};
     const hasSeriesField = Boolean(seriesField);
     const categoryLabelMap = (categoryLabels as Record<string, string>) || {};
@@ -167,6 +174,7 @@ export function ChartBlock({ visual, visualId }: Props) {
     };
 
     if (stacks && Array.isArray(stacks) && resolvedVisual.type === 'bar') {
+      const horizontal = Boolean((resolvedVisual.spec || {}).horizontal);
       const series = (stacks as string[]).map(stack => {
         const data = orderedRows.map((r: Record<string, any>) => {
           const value = parseNum(r[stack]);
@@ -201,22 +209,37 @@ export function ChartBlock({ visual, visualId }: Props) {
           }
         },
         legend: { top: 8, data: (stacks as string[]).map(s => (stackLabels as Record<string, string>)?.[s] || s) },
-        grid: { top: 48, right: 24, bottom: 120, left: 80 },
-        xAxis: {
-          type: 'category',
-          data: categories,
-          axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle' }
-        },
-        yAxis: {
-          type: 'value',
-          name: yLabel,
-          nameLocation: 'middle',
-          nameRotate: 90,
-          nameGap: 60,
-          nameTextStyle: { align: 'center', verticalAlign: 'middle' },
-          axisLabel: { formatter: isStacked ? '{value}%' : '{value}' },
-          max: isStacked ? 100 : undefined
-        },
+        grid: horizontal ? { top: 48, right: 24, bottom: 48, left: 80 } : { top: 48, right: 24, bottom: 120, left: 80 },
+        xAxis: horizontal
+          ? {
+              type: 'value',
+              name: yLabel,
+              nameLocation: 'middle',
+              nameGap: 50,
+              axisLabel: { formatter: isStacked ? '{value}%' : '{value}' },
+              max: isStacked ? 100 : undefined
+            }
+          : {
+              type: 'category',
+              data: categories,
+              axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle' }
+            },
+        yAxis: horizontal
+          ? {
+              type: 'category',
+              data: categories,
+              axisLabel: { interval: 0 }
+            }
+          : {
+              type: 'value',
+              name: yLabel,
+              nameLocation: 'middle',
+              nameRotate: 90,
+              nameGap: 60,
+              nameTextStyle: { align: 'center', verticalAlign: 'middle' },
+              axisLabel: { formatter: isStacked ? '{value}%' : '{value}' },
+              max: isStacked ? 100 : undefined
+            },
         series
       };
     }
@@ -318,6 +341,7 @@ export function ChartBlock({ visual, visualId }: Props) {
     }
 
     if (hasSeriesField && resolvedVisual.type === 'line') {
+      const areaEnabled = Boolean(area);
       const seriesNames = Array.isArray(seriesValueFields) ? seriesValueFields : Object.keys(seriesValueFields || {});
       const uniqueSeries = seriesNames.length > 0
         ? seriesNames.map(normalizeCategory)
@@ -346,6 +370,7 @@ export function ChartBlock({ visual, visualId }: Props) {
           data,
           itemStyle: { color: (colors as Record<string, string>)?.[seriesName] },
           lineStyle: { width: 3 },
+          areaStyle: areaEnabled ? { opacity: 0.18 } : undefined,
         };
       });
 
@@ -516,12 +541,41 @@ export function ChartBlock({ visual, visualId }: Props) {
       const v = y ? r[y] : null;
       return typeof v === 'number' ? v : parseNum(v);
     });
+    let meanCategoryLabel: string | undefined;
+    if (meanField && binStartField && binEndField && orderedRows.length > 0) {
+      const meanVal = parseNum(orderedRows[0][meanField]);
+      if (Number.isFinite(meanVal)) {
+        const match = orderedRows.find(r => {
+          const start = parseNum(r[binStartField]);
+          const end = parseNum(r[binEndField]);
+          return Number.isFinite(start) && Number.isFinite(end) && meanVal >= start && meanVal <= end;
+        });
+        if (match) meanCategoryLabel = normalizeCategory(match[x]);
+      }
+    }
+    const areaEnabled = Boolean(area);
     const series = [
       {
         name: yLabel || y,
         type: resolvedVisual.type === 'table' ? 'line' : resolvedVisual.type,
         data: seriesData,
-        smooth: resolvedVisual.type === 'line'
+        smooth: resolvedVisual.type === 'line',
+        areaStyle: resolvedVisual.type === 'line' && areaEnabled ? { opacity: 0.18 } : undefined,
+        markLine: meanCategoryLabel ? {
+          symbol: 'none',
+          label: { formatter: 'Mean distance', color: '#111' },
+          data: [{ xAxis: meanCategoryLabel }]
+        } : undefined,
+        ...(resolvedVisual.type === 'bar'
+          ? {
+              barGap: barGap ?? '0%',
+              barCategoryGap: barCategoryGap ?? '0%',
+              itemStyle: barBorder ? {
+                borderColor: (barBorder as any).color ?? '#111',
+                borderWidth: (barBorder as any).width ?? 0.5
+              } : undefined,
+            }
+          : {})
       }
     ];
 

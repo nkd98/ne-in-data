@@ -8,6 +8,7 @@ import { ChartBlock } from './ChartBlock';
 import { TableBlock } from './TableBlock';
 import { CalloutBlock } from './CalloutBlock';
 import { ContentBlock } from './ContentBlock';
+import { ImageBlock } from './ImageBlock';
 
 export function BlockRenderer({ blocks }: { blocks: Block[] }) {
   return (
@@ -25,6 +26,8 @@ export function BlockRenderer({ blocks }: { blocks: Block[] }) {
             return <ChartBlock key={index} visualId={block.visualId} />;
           case 'table':
             return <TableBlock key={index} visualId={block.visualId} />;
+          case 'image':
+            return <ImageBlock key={index} src={block.src} alt={block.alt} caption={block.caption} />;
           case 'callout':
             return <CalloutBlock key={index} content={block.content} />;
           case 'methods':

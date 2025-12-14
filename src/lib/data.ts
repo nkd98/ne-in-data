@@ -95,6 +95,176 @@ const visuals: Visual[] = [
       tags: ['education', 'ger', 'north-east', 'india']
     },
     {
+      id: 'ne-forest-loss-area',
+      title: 'Annual tree cover loss, North-East India',
+      type: 'line',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_annual_total.csv',
+        x: 'year',
+        y: 'loss_ha',
+        xLabel: 'Year',
+        yLabel: 'Tree cover loss (hectares)',
+        area: true,
+        colors: {
+          default: '#2B3C63'
+        }
+      },
+      caption: 'Annual tree cover loss across North-Eastern states shows recurrent spikes over the last two decades.',
+      units: 'Hectares',
+      coverage: 'North-East India',
+      source: { 
+        name: 'Satellite-derived tree cover loss (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_annual_total.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['forest', 'environment', 'north-east']
+    },
+    {
+      id: 'ne-forest-loss-state-lines',
+      title: 'Tree cover loss by state (7-year smoothed)',
+      type: 'line',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_by_state_smoothed_7yr.csv',
+        x: 'year',
+        y: 'loss_ha_smoothed',
+        seriesField: 'state',
+        xLabel: 'Year',
+        yLabel: 'Tree cover loss (ha, 7-yr smoothed)',
+        colors: {
+          Arunachal: '#6C5B7B',
+          'Arunachal Pradesh': '#6C5B7B',
+          Assam: '#E86A33',
+          Manipur: '#2A9D8F',
+          Meghalaya: '#C06C84',
+          Mizoram: '#355070',
+          Nagaland: '#E9C46A',
+          Sikkim: '#4CAF50',
+          Tripura: '#3A86FF'
+        }
+      },
+      caption: 'Smoothed annual tree cover loss by North-Eastern state highlights Assam and Nagaland as consistent hotspots.',
+      units: 'Hectares (7-yr smoothed)',
+      coverage: 'North-East India by state',
+      source: { 
+        name: 'Satellite-derived tree cover loss (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_by_state_smoothed_7yr.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['forest', 'environment', 'north-east', 'states']
+    },
+    {
+      id: 'ne-forest-loss-vs-gain',
+      title: 'Forest loss vs gain by state',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_vs_gain_by_state.csv',
+        x: 'state',
+        stacks: ['Gain (2000–2020)', 'Loss (2001–2023)'],
+        stackField: 'metric',
+        valueField: 'hectares',
+        stacked: false,
+        stackLabels: {
+          'Gain (2000–2020)': 'Gain (2000–2020)',
+          'Loss (2001–2023)': 'Loss (2001–2023)'
+        },
+        colors: {
+          'Gain (2000–2020)': '#2B3C63',
+          'Loss (2001–2023)': '#C33C54'
+        },
+        xLabel: 'State',
+        yLabel: 'Hectares',
+        categoryOrder: [
+          'Arunachal Pradesh',
+          'Assam',
+          'Manipur',
+          'Meghalaya',
+          'Mizoram',
+          'Nagaland',
+          'Sikkim',
+          'Tripura'
+        ],
+        height: 480
+      },
+      caption: 'Loss outweighs gain across most North-Eastern states; Assam and Nagaland show the largest net loss.',
+      units: 'Hectares',
+      coverage: 'North-East India by state',
+      source: { 
+        name: 'Forest loss vs gain (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_vs_gain_by_state.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['forest', 'environment', 'north-east', 'states']
+    },
+    {
+      id: 'assam-phc-distance-hist',
+      title: 'How far are villages from the nearest PHC?',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/assam_phc_distance_histogram.csv',
+        x: 'bin_label',
+        y: 'village_count',
+        xLabel: 'Distance to nearest PHC (km)',
+        yLabel: 'Number of villages',
+        meanField: 'mean_distance_km',
+        binStartField: 'bin_start_km',
+        binEndField: 'bin_end_km',
+        colors: { default: '#2B3C63' },
+        barGap: '0%',
+        barCategoryGap: '0%',
+        barBorder: { color: '#111', width: 0.4 },
+        height: 420
+      },
+      caption: 'Most villages are within 6 km of a PHC; the mean distance sits inside the 4–6 km bin.',
+      units: 'Villages',
+      coverage: 'Assam',
+      source: { 
+        name: 'Assam PHC distance histogram (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/assam_phc_distance_histogram.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['health', 'assam', 'phc']
+    },
+    {
+      id: 'assam-phc-distance-bands',
+      title: 'Distance to nearest PHC by district (share of villages)',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/assam_district_phc_distance_bands_tidy.csv',
+        x: 'district',
+        stacks: ['0–3 km', '3–5 km', '5–7 km', '7–10 km', '10+ km'],
+        stackField: 'band',
+        valueField: 'share',
+        stacked: true,
+        stackLabels: {
+          '0–3 km': '0–3 km',
+          '3–5 km': '3–5 km',
+          '5–7 km': '5–7 km',
+          '7–10 km': '7–10 km',
+          '10+ km': '10+ km'
+        },
+        colors: {
+          '0–3 km': '#2B3C63',
+          '3–5 km': '#4E6FA6',
+          '5–7 km': '#7A9BC2',
+          '7–10 km': '#A4BED6',
+          '10+ km': '#D0DEEB'
+        },
+        yLabel: 'Share of villages (%)',
+        categoryOrder: [],
+        height: 720,
+        horizontal: true
+      },
+      caption: 'District-wise split of how far villages are from their nearest PHC; bars are proportional (0–100%).',
+      units: '% of villages',
+      coverage: 'Districts of Assam',
+      source: { 
+        name: 'Assam PHC distance bands (via Supabase dataset)', 
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/assam_district_phc_distance_bands_tidy.csv' 
+      },
+      lastUpdated: '2025-11-01',
+      tags: ['health', 'assam', 'phc', 'districts']
+    },
+    {
       id: 'ne-ger-distribution',
       title: 'GER distribution across states by education stage',
       type: 'scatter',

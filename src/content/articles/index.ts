@@ -1,23 +1,19 @@
 import type { Article } from '@/lib/types';
 
 import assamTeaCultivation from './assam-tea-cultivation-landscape';
-import assamTeaExportsComposition from './assam-tea-exports-composition';
-import assamEmploymentTrends from './assam-employment-trends-2011-2024';
-import mizoramLiteracyPush from './mizoram-literacy-push';
-import nagalandAgriculturalReforms from './nagaland-agricultural-reforms';
 import northEastRoadStats from './north-east-road-stats'; 
 import northEastEducationGer from './north-east-education-ger'; 
+import northEastForestCover from './ne-forest-cover';
+import assamPhcDistance from './assam-phc-distance';
 
 
 
 const articles: Article[] = [
   assamTeaCultivation,
-  assamTeaExportsComposition,
-  assamEmploymentTrends,
-  mizoramLiteracyPush,
-  nagalandAgriculturalReforms,
   northEastRoadStats,
   northEastEducationGer,
+  northEastForestCover,
+  assamPhcDistance,
 ];
 
 export default articles;

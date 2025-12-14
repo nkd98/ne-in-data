@@ -23,6 +23,7 @@ export type Block =
   | { type: 'h2'; content: string }
   | { type: 'h3'; content: string }
   | { type: 'p'; content: string }
+  | { type: 'image'; src: string; alt: string; caption?: string }
   | { type: 'chart'; visualId: string }
   | { type: 'table'; visualId: string }
   | { type: 'callout'; content: string }
