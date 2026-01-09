@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import type { Block, TeaPlaygroundContent, TeaPlaygroundSection } from '@/lib/types';
 import { BlockRenderer } from '@/components/article-blocks/BlockRenderer';
+import { cn } from '@/lib/utils';
 
 const BarStacked = dynamic(() => import('@/components/charts/BarStacked'), { ssr: false });
 
@@ -15,6 +16,7 @@ type Props = {
   kicker?: string;
   organization?: string;
   deck?: string;
+  compactBlocks?: boolean;
 };
 
 export default function ArticlePlaygroundLayout({
@@ -26,6 +28,7 @@ export default function ArticlePlaygroundLayout({
   kicker = 'Insight',
   organization = 'Northeast in Data',
   deck,
+  compactBlocks = false,
 }: Props) {
   const hero = playground?.hero ?? {
     kicker,
@@ -61,16 +64,21 @@ export default function ArticlePlaygroundLayout({
           csvUrl={section.chart.csvUrl}
           height={section.chart.height}
           indexScale={section.chart.indexScale}
+          title={section.title}
         />
         <figcaption className="text-right text-sm text-muted-foreground">
-          <a
-            className="font-medium text-foreground underline decoration-dotted underline-offset-2"
-            href={section.source.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {section.source.label}
-          </a>
+          {/\.(csv|tsv)(\?|$)/i.test(section.source.url) ? (
+            <span className="font-medium text-foreground">{section.source.label}</span>
+          ) : (
+            <a
+              className="font-medium text-foreground underline decoration-dotted underline-offset-2"
+              href={section.source.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {section.source.label}
+            </a>
+          )}
         </figcaption>
       </figure>
     );
@@ -107,7 +115,12 @@ export default function ArticlePlaygroundLayout({
           {playground.sections.map((section, index) => renderSection(section, index))}
         </article>
       ) : (
-        <article className="container mx-auto max-w-4xl space-y-10 px-6 py-12 md:space-y-14 md:py-16">
+        <article
+          className={cn(
+            "container mx-auto max-w-4xl px-6 py-12 md:py-16",
+            compactBlocks ? "space-y-6 md:space-y-8" : "space-y-10 md:space-y-14"
+          )}
+        >
           {blocks.length > 0 ? <BlockRenderer blocks={blocks} /> : <p className="text-muted-foreground">No content available.</p>}
         </article>
       )}

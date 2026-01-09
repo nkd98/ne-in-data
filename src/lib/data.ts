@@ -78,14 +78,23 @@ const visuals: Visual[] = [
           'class9_class12_t',
           'high_education_t',
         ],
+        categoryLabels: {
+          pre_primary_class2_t: 'Foundational',
+          class3_class5_t: 'Preparatory',
+          class5_class8_t: 'Middle',
+          class9_class12_t: 'Secondary',
+          high_education_t: 'Higher education',
+        },
+        xLabelRotate: 60,
         colors: {
           'All India': '#2B3C63',
           'Northeast': '#0FA77E',
         },
+        xLabel: 'Education stage',
         yLabel: 'Gross Enrolment Ratio',
       },
       caption: 'North-East India outperforms the all-India average in early grades but falls behind by higher education.',
-      units: 'Gross Enrolment Ratio',
+      units: '%',
       coverage: 'North-East vs All India',
       source: { 
         name: 'UDISE+/AISHE (via Supabase dataset)', 
@@ -128,6 +137,7 @@ const visuals: Visual[] = [
         x: 'year',
         y: 'loss_ha_smoothed',
         seriesField: 'state',
+        colorMode: 'multi',
         xLabel: 'Year',
         yLabel: 'Tree cover loss (ha, 7-yr smoothed)',
         colors: {
@@ -267,50 +277,46 @@ const visuals: Visual[] = [
     {
       id: 'ne-ger-distribution',
       title: 'GER distribution across states by education stage',
-      type: 'scatter',
+      type: 'line',
       spec: {
         dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_dist_states.csv',
-        x: 'ger',
-        y: 'stage_key',
-        yCategoryOrder: [
+        x: 'stage_key',
+        y: 'ger',
+        seriesField: 'states',
+        colorMode: 'multi',
+        categoryOrder: [
           'pre_primary_class2_t',
           'class3_class5_t',
           'class5_class8_t',
           'class9_class12_t',
           'high_education_t'
         ],
-        yCategoryLabels: {
+        categoryLabels: {
           high_education_t: 'Higher education',
-          class9_class12_t: 'Class 9–12',
-          class5_class8_t: 'Class 6–8',
-          class3_class5_t: 'Class 3–5',
-          pre_primary_class2_t: 'Pre-primary–Class 2'
+          class9_class12_t: 'Secondary',
+          class5_class8_t: 'Middle',
+          class3_class5_t: 'Preparatory',
+          pre_primary_class2_t: 'Foundational'
         },
-        colorField: 'states',
-        colors: {
-          default: '#6B7280',
+        highlightSeries: ['All India', 'Meghalaya', 'Assam'],
+        highlightSeriesColors: {
           'All India': '#111111',
-          'Arunachal Pradesh': '#6C5B7B',
-          Assam: '#E86A33',
-          Manipur: '#2A9D8F',
           Meghalaya: '#C06C84',
-          Mizoram: '#355070',
-          Nagaland: '#E9C46A',
-          Sikkim: '#4CAF50',
-          Tripura: '#3A86FF'
+          Assam: '#E86A33'
         },
-        symbolField: 'is_all_india',
-        symbolMap: { true: 'star', false: 'circle' },
-        symbolSizeMap: { true: 12, false: 13 },
-        labelField: 'states',
-        pointSize: 13,
-        jitterPx: 0, // horizontal jitter in pixels
-        jitterYPx: 8, // vertical jitter in pixels
-        xLabel: 'Gross Enrolment Ratio (GER)',
-        yLabel: 'Education stage',
+        mutedSeriesColor: '#CFCFCF',
+        mutedSeriesOpacity: 0.18,
+        mutedSeriesWidth: 1.2,
+        highlightSeriesWidth: 3.2,
+        mutedSymbolSize: 3,
+        highlightSymbolSize: 7,
+        legendOnlyHighlighted: true,
+        gridLeft: 44,
+        xLabel: 'Education stage',
+        yLabel: 'Gross Enrolment Ratio (GER)',
         height: 560
       },
-      caption: 'Each dot is a state; X markers show all-India GER for that stage.',
+      caption: 'Each line is a state; the All-India series is included for comparison.',
       units: 'Gross Enrolment Ratio',
       coverage: 'North-East states vs All India',
       source: { 
@@ -329,6 +335,11 @@ const visuals: Visual[] = [
         dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/tea_dist.csv',
         x: 'Metric',
         stacks: ['Big Growers', 'Small Growers'],
+        horizontal: true,
+        showValueLabels: true,
+        valueLabelMin: 8,
+        valueLabelPosition: 'inside',
+        valueLabelColor: '#FFFFFF',
         stackLabels: {
           'Big Growers': 'Large Tea Estates',
           'Small Growers': 'Small Tea Growers'
@@ -357,6 +368,12 @@ const visuals: Visual[] = [
         dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/tea_area_district.csv',
         x: 'District',
         stacks: ['Small Growers', 'Big Growers'],
+        horizontal: true,
+        showValueLabels: true,
+        valueLabelMin: 8,
+        valueLabelPosition: 'inside',
+        valueLabelColor: '#FFFFFF',
+        gridLeft: 88,
         stackLabels: {
           'Small Growers': 'Small Tea Growers',
           'Big Growers': 'Large Tea Estates'

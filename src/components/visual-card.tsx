@@ -1,13 +1,17 @@
 'use client';
 
+import { useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { EChartsOption } from 'echarts';
 import type { Visual } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Copy, Link as LinkIcon, BarChart, LineChart, Table } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { downloadChartImage } from '@/lib/chart-export';
+import { buildWatermarkGraphic } from '@/lib/chart-watermark';
+import { chartPalette } from '@/lib/chart-palette';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
@@ -26,9 +30,29 @@ const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOpti
   const rows: any[] = Array.isArray(spec.data) ? spec.data : [];
   const categories = rows.map((row) => String(row?.[spec.x] ?? ''));
   const values = rows.map((row) => parseValue(row?.[spec.y]));
-  const primaryColor = 'hsl(var(--primary))';
-  const axisColor = 'hsl(var(--muted-foreground))';
-  const borderColor = 'hsl(var(--border))';
+  const primaryColor = chartPalette.accent;
+  const axisColor = chartPalette.axis;
+  const borderColor = chartPalette.grid;
+  const axisTitleStyle = { fontWeight: 700 };
+  const formatFieldLabel = (value?: string) => {
+    if (!value) return '';
+    return value
+      .replace(/[_-]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/\b\w/g, (match) => match.toUpperCase());
+  };
+  const withUnits = (label?: string, units?: string) => {
+    if (!label) return units || '';
+    if (!units) return label;
+    const lowerLabel = label.toLowerCase();
+    const lowerUnits = units.toLowerCase();
+    if (lowerLabel.includes(lowerUnits)) return label;
+    if (label.includes('(') || label.includes('[')) return label;
+    return `${label} (${units})`;
+  };
+  const xAxisTitle = spec.xLabel || formatFieldLabel(spec.x);
+  const yAxisTitle = withUnits(spec.yLabel || formatFieldLabel(spec.y), visual.units);
 
   return {
     tooltip: { trigger: 'axis' },
@@ -36,15 +60,22 @@ const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOpti
     xAxis: {
       type: 'category' as const,
       data: categories,
+      name: xAxisTitle,
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameRotate: 0,
+      nameTextStyle: axisTitleStyle,
       axisLabel: { color: axisColor },
       axisLine: { lineStyle: { color: borderColor } },
       axisTick: { alignWithLabel: true },
     },
     yAxis: {
       type: 'value' as const,
-      name: spec.yLabel,
+      name: yAxisTitle,
       nameLocation: 'middle',
+      nameRotate: 90,
       nameGap: 46,
+      nameTextStyle: axisTitleStyle,
       axisLabel: { color: axisColor },
       axisLine: { lineStyle: { color: borderColor } },
       splitLine: { lineStyle: { color: borderColor, opacity: 0.4 } },
@@ -63,31 +94,62 @@ const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOpti
         barMaxWidth: type === 'bar' ? 40 : undefined,
       },
     ],
+    graphic: buildWatermarkGraphic(),
   };
 };
 
-function RenderVisual({ visual }: { visual: Visual }) {
+function RenderVisual({
+    visual,
+    chartRef,
+    onDownload,
+}: {
+    visual: Visual;
+    chartRef?: any;
+    onDownload?: () => void;
+}) {
     switch (visual.type) {
         case 'line':
             return (
-                <div className="h-[300px] w-full md:h-[400px]">
+                <div className="relative h-[300px] w-full md:h-[400px]">
                     <ReactECharts
+                        ref={chartRef}
                         option={buildCartesianOption(visual, 'line')}
                         notMerge
                         lazyUpdate
                         style={{ height: '100%', width: '100%' }}
                     />
+                    {onDownload && (
+                        <button
+                            type="button"
+                            onClick={onDownload}
+                            aria-label="Download chart"
+                            className="absolute bottom-2 right-2 rounded-md border border-border bg-background/95 p-2 text-foreground shadow-sm transition hover:bg-muted"
+                        >
+                            <Download className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
             );
         case 'bar':
             return (
-                <div className="h-[300px] w-full md:h-[400px]">
+                <div className="relative h-[300px] w-full md:h-[400px]">
                     <ReactECharts
+                        ref={chartRef}
                         option={buildCartesianOption(visual, 'bar')}
                         notMerge
                         lazyUpdate
                         style={{ height: '100%', width: '100%' }}
                     />
+                    {onDownload && (
+                        <button
+                            type="button"
+                            onClick={onDownload}
+                            aria-label="Download chart"
+                            className="absolute bottom-2 right-2 rounded-md border border-border bg-background/95 p-2 text-foreground shadow-sm transition hover:bg-muted"
+                        >
+                            <Download className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
             );
         case 'table':
@@ -127,6 +189,7 @@ function VisualIcon({ type }: { type: Visual['type'] }) {
 
 export function VisualCard({ visual }: { visual: Visual }) {
     const { toast } = useToast();
+    const chartRef = useRef<any>(null);
 
     const handleCopySpec = () => {
         navigator.clipboard.writeText(JSON.stringify(visual.spec, null, 2));
@@ -149,6 +212,16 @@ export function VisualCard({ visual }: { visual: Visual }) {
         downloadAnchorNode.remove();
         toast({ title: 'Data Downloading!', description: 'The raw data for this visual is being downloaded.' });
     };
+    const handleDownloadChart = () => {
+        const instance = chartRef.current?.getEchartsInstance?.();
+        if (!instance) return;
+        downloadChartImage({
+            instance,
+            title: visual.title,
+            filename: visual.id || 'chart'
+        });
+    };
+    const isDownloadSource = Boolean(visual.source?.url && /\.(csv|tsv)(\?|$)/i.test(visual.source.url));
 
     return (
         <Card id={visual.id} className="overflow-hidden shadow-md transition-shadow duration-300 hover:shadow-xl">
@@ -157,15 +230,25 @@ export function VisualCard({ visual }: { visual: Visual }) {
                     <CardTitle className="text-xl font-headline group-hover:text-primary">{visual.title}</CardTitle>
                     <VisualIcon type={visual.type} />
                 </div>
-                {visual.caption && <CardDescription>{visual.caption}</CardDescription>}
             </CardHeader>
             <CardContent>
-                <RenderVisual visual={visual} />
+                <RenderVisual
+                    visual={visual}
+                    chartRef={chartRef}
+                    onDownload={visual.type === 'table' ? undefined : handleDownloadChart}
+                />
             </CardContent>
             <CardFooter className="flex-col items-start gap-4 bg-secondary/50 p-4">
                  <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
                     <div>
-                        Source: <a href={visual.source.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">{visual.source.name}</a>
+                        Source:{' '}
+                        {visual.source.url && !isDownloadSource ? (
+                            <a href={visual.source.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+                                {visual.source.name}
+                            </a>
+                        ) : (
+                            <span className="font-medium text-foreground">{visual.source.name}</span>
+                        )}
                     </div>
                     <div>Last Updated: {visual.lastUpdated}</div>
                 </div>

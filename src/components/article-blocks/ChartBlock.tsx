@@ -1,11 +1,15 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Papa from 'papaparse';
 import { getVisualById } from '@/lib/data';
 import type { Visual } from '@/lib/types';
+import { downloadChartImage } from '@/lib/chart-export';
+import { buildWatermarkGraphic } from '@/lib/chart-watermark';
+import { Download } from 'lucide-react';
+import { buildSeriesColorMap, chartPalette, pickHighlightIndexByTotals, pickHighlightSeriesIndex } from '@/lib/chart-palette';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
@@ -18,6 +22,8 @@ export function ChartBlock({ visual, visualId }: Props) {
   const resolvedVisual = visual ?? (visualId ? getVisualById(visualId) : undefined);
   const [rows, setRows] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const chartRef = useRef<any>(null);
+  const watermarkPad = 0;
   const chartHeight = useMemo(() => {
     if (!resolvedVisual) return 420;
     const spec = resolvedVisual.spec || {};
@@ -29,12 +35,12 @@ export function ChartBlock({ visual, visualId }: Props) {
       const perFacetHeight = spec.facetHeight ?? 140;
       const gap = (spec.facetGap ?? 36) + 8;
       const baseTop = 48;
-      const bottomPad = spec.facetBottomPad ?? 48;
+      const bottomPad = (spec.facetBottomPad ?? 48) + watermarkPad;
       const totalHeight = baseTop + facets.length * (perFacetHeight + gap) + bottomPad;
       return spec.height ? Math.max(spec.height, totalHeight) : Math.max(360, totalHeight);
     }
     return spec.height ?? 420;
-  }, [resolvedVisual, rows]);
+  }, [resolvedVisual, rows, watermarkPad]);
 
   useEffect(() => {
     if (!resolvedVisual) return;
@@ -58,12 +64,71 @@ export function ChartBlock({ visual, visualId }: Props) {
       .then(csv => Papa.parse(csv, { header: true, dynamicTyping: true }).data)
       .then(parsed => {
         if (!mounted) return;
+        const normalizeKey = (key: string) => key.replace(/\uFEFF/g, '').trim();
+        const normalizeField = (key: string) =>
+          normalizeKey(key).toLowerCase().replace(/[^a-z0-9]+/g, '');
+        const normalized = (parsed as Record<string, any>[]).map((row) => {
+          const next: Record<string, any> = {};
+          Object.entries(row || {}).forEach(([key, value]) => {
+            const cleanedKey = normalizeKey(key);
+            if (!cleanedKey) return;
+            next[cleanedKey] = value;
+          });
+          return next;
+        });
+        const availableKeys = normalized[0] ? Object.keys(normalized[0]) : [];
+        const resolveKey = (target?: string) => {
+          if (!target) return undefined;
+          const normalizedTarget = normalizeField(target);
+          const matched = availableKeys.find((key) => normalizeField(key) === normalizedTarget);
+          return matched || target;
+        };
+        const desiredKeys = new Set<string>();
+        const spec = resolvedVisual.spec || {};
+        [
+          spec.x,
+          spec.y,
+          spec.stackField,
+          spec.valueField,
+          spec.seriesField,
+          spec.symbolField,
+          spec.colorField,
+          spec.labelField,
+          spec.labelFilterField,
+          spec.facetField,
+          spec.meanField,
+          spec.binStartField,
+          spec.binEndField,
+        ].forEach((key) => {
+          if (typeof key === 'string' && key) desiredKeys.add(key);
+        });
+        if (Array.isArray(spec.stacks)) {
+          spec.stacks.forEach((key: string) => desiredKeys.add(key));
+        }
+        const seriesValueFieldMap = spec.seriesValueFields as Record<string, string> | undefined;
+        if (seriesValueFieldMap && typeof seriesValueFieldMap === 'object') {
+          Object.values(seriesValueFieldMap).forEach((key) => desiredKeys.add(key));
+        }
+        const keyMap = new Map<string, string>();
+        desiredKeys.forEach((key) => {
+          const resolvedKey = resolveKey(key);
+          if (resolvedKey) keyMap.set(key, resolvedKey);
+        });
+        const alignedRows = normalized.map((row) => {
+          const next = { ...row };
+          keyMap.forEach((resolvedKey, desiredKey) => {
+            if (!(desiredKey in next) && resolvedKey in next) {
+              next[desiredKey] = next[resolvedKey];
+            }
+          });
+          return next;
+        });
         let filtered: any[] = [];
         if (stacks && Array.isArray(stacks)) {
           if (stackField && valueField) {
             // Pivot long-form data into wide form for stacking
             const pivot = new Map<string, any>();
-            parsed.forEach((row: any) => {
+            alignedRows.forEach((row: any) => {
               const category = row[x];
               const stackKey = row[stackField];
               const value = row[valueField];
@@ -76,10 +141,10 @@ export function ChartBlock({ visual, visualId }: Props) {
             });
             filtered = Array.from(pivot.values());
           } else {
-            filtered = parsed.filter((d: any) => d[x] != null && stacks.every((s: string) => d[s] != null && d[s] !== ''));
+            filtered = alignedRows.filter((d: any) => d[x] != null && stacks.every((s: string) => d[s] != null && d[s] !== ''));
           }
         } else if (hasSeriesField) {
-          filtered = parsed.filter((d: any) => {
+          filtered = alignedRows.filter((d: any) => {
             const category = d[x];
             const seriesValue = d[seriesField as string];
             if (category == null || seriesValue == null) return false;
@@ -91,7 +156,7 @@ export function ChartBlock({ visual, visualId }: Props) {
             return value != null && value !== '';
           });
         } else {
-          filtered = parsed.filter((d: any) => d[x] != null && d[y] != null);
+          filtered = alignedRows.filter((d: any) => d[x] != null && d[y] != null);
         }
         setRows(filtered);
       })
@@ -112,7 +177,6 @@ export function ChartBlock({ visual, visualId }: Props) {
       y,
       stacks,
       stackLabels,
-      colors,
       yLabel,
       stacked,
       categoryOrder,
@@ -122,7 +186,6 @@ export function ChartBlock({ visual, visualId }: Props) {
       facetHeight,
       facetGap,
       highlightCategories,
-      highlightColor,
       categoryLabels,
       seriesField,
       seriesValueFields,
@@ -135,7 +198,10 @@ export function ChartBlock({ visual, visualId }: Props) {
       xLabel,
       yCategoryOrder,
       yCategoryLabels,
+      xCategoryOrder,
+      xCategoryLabels,
       pointSize,
+      xLabelRotate,
       annotateAlwaysField,
       jitterPx,
       jitterYPx,
@@ -147,7 +213,52 @@ export function ChartBlock({ visual, visualId }: Props) {
       barGap,
       barCategoryGap,
       barBorder,
+      colorMode,
+      swapAxes,
+      gridLeft,
+      showValueLabels,
+      valueLabelPosition,
+      valueLabelMin,
+      valueLabelPrecision,
+      valueLabelColor,
+      valueLabelFontSize,
+      highlightSeries,
+      highlightSeriesColors,
+      mutedSeriesColor,
+      mutedSeriesOpacity,
+      highlightSeriesWidth,
+      mutedSeriesWidth,
+      highlightSymbolSize,
+      mutedSymbolSize,
+      legendOnlyHighlighted,
     } = resolvedVisual.spec || {};
+    const formatFieldLabel = (value?: string) => {
+      if (!value) return '';
+      return value
+        .replace(/[_-]+/g, ' ')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/\b\w/g, (match) => match.toUpperCase());
+    };
+    const withUnits = (label?: string, units?: string) => {
+      if (!label) return units || '';
+      if (!units) return label;
+      const lowerLabel = label.toLowerCase();
+      const lowerUnits = units.toLowerCase();
+      if (lowerLabel.includes(lowerUnits)) return label;
+      if (label.includes('(') || label.includes('[')) return label;
+      return `${label} (${units})`;
+    };
+    const xAxisTitle = xLabel || formatFieldLabel(x);
+    const yAxisTitle = withUnits(yLabel || formatFieldLabel(y), resolvedVisual.units);
+    const useMultiColor = colorMode === 'multi';
+    const seriesPalette = useMultiColor ? chartPalette.seriesMulti : chartPalette.seriesMuted;
+    const axisTitleStyle = { fontWeight: 700, color: chartPalette.ink };
+    const axisLabelStyle = { color: chartPalette.axis };
+    const axisLineStyle = { lineStyle: { color: chartPalette.grid } };
+    const splitLineStyle = { lineStyle: { color: chartPalette.grid, opacity: 0.4 } };
+    const isNarrow = typeof window !== 'undefined' ? window.innerWidth < 640 : false;
+    const baseWatermark = buildWatermarkGraphic({ top: isNarrow ? 48 : 32 });
     const hasSeriesField = Boolean(seriesField);
     const categoryLabelMap = (categoryLabels as Record<string, string>) || {};
     const normalizeCategory = (v: any) => typeof v === 'string' ? v.trim() : String(v ?? '');
@@ -175,11 +286,51 @@ export function ChartBlock({ visual, visualId }: Props) {
 
     if (stacks && Array.isArray(stacks) && resolvedVisual.type === 'bar') {
       const horizontal = Boolean((resolvedVisual.spec || {}).horizontal);
-      const series = (stacks as string[]).map(stack => {
+      const labelMin = typeof valueLabelMin === 'number' ? valueLabelMin : undefined;
+      const labelPrecision = typeof valueLabelPrecision === 'number'
+        ? valueLabelPrecision
+        : isStacked
+          ? 0
+          : 0;
+      const labelColor = typeof valueLabelColor === 'string' ? valueLabelColor : chartPalette.ink;
+      const labelFontSize = typeof valueLabelFontSize === 'number' ? valueLabelFontSize : (isNarrow ? 9 : 10);
+      const legendItems = (stacks as string[]).map(
+        (s) => (stackLabels as Record<string, string>)?.[s] || s
+      );
+      const barLegendTop = 8;
+      const barWatermarkTop = isNarrow ? 40 : 32;
+      const barGridTop = isNarrow ? 72 : 48;
+      const barGridLeft = typeof gridLeft === 'number' ? gridLeft : 80;
+      const barWatermark = buildWatermarkGraphic({ top: barWatermarkTop });
+      const valueLabelConfig = showValueLabels
+        ? {
+            show: true,
+            position: valueLabelPosition || (horizontal ? 'insideRight' : 'insideTop'),
+            formatter: (params: any) => {
+              const val = Number(params?.value);
+              if (!Number.isFinite(val)) return '';
+              if (labelMin != null && val < labelMin) return '';
+              const rounded = labelPrecision > 0 ? val.toFixed(labelPrecision) : String(Math.round(val));
+              return isStacked ? `${rounded}%` : rounded;
+            },
+            color: labelColor,
+            fontSize: labelFontSize,
+            fontWeight: 600,
+          }
+        : undefined;
+      const stackKeys = stacks as string[];
+      const stackValues = stackKeys.map((stack) =>
+        orderedRows.map((row: Record<string, any>) => parseNum(row[stack]))
+      );
+      const stackHighlightIndex = stackKeys.length <= 3
+        ? (pickHighlightSeriesIndex(stackKeys) ?? pickHighlightIndexByTotals(stackValues))
+        : undefined;
+      const stackColorMap = buildSeriesColorMap(stackKeys, stackHighlightIndex, seriesPalette);
+      const series = stackKeys.map(stack => {
         const data = orderedRows.map((r: Record<string, any>) => {
           const value = parseNum(r[stack]);
           if (!isStacked) return value;
-          const total = (stacks as string[]).reduce((sum: number, s: string) => sum + parseNum(r[s]), 0) || 1;
+          const total = stackKeys.reduce((sum: number, s: string) => sum + parseNum(r[s]), 0) || 1;
           return (value / total) * 100;
         });
         return {
@@ -188,14 +339,15 @@ export function ChartBlock({ visual, visualId }: Props) {
           stack: isStacked ? 'total' : undefined,
           emphasis: { focus: 'series' },
           data,
-          itemStyle: { color: (colors as Record<string, string>)?.[stack] },
+          itemStyle: { color: stackColorMap[stack] },
+          label: valueLabelConfig,
           barGap: isStacked ? '10%' : '0%',
           barCategoryGap: isStacked ? '20%' : '35%',
         };
       });
 
       return {
-        backgroundColor: '#fff',
+        backgroundColor: chartPalette.background,
         tooltip: {
           trigger: 'axis',
           axisPointer: { type: 'shadow' },
@@ -208,39 +360,55 @@ export function ChartBlock({ visual, visualId }: Props) {
             return `${cat}<br/>${rowsText}`;
           }
         },
-        legend: { top: 8, data: (stacks as string[]).map(s => (stackLabels as Record<string, string>)?.[s] || s) },
-        grid: horizontal ? { top: 48, right: 24, bottom: 48, left: 80 } : { top: 48, right: 24, bottom: 120, left: 80 },
+        legend: { top: barLegendTop, data: legendItems },
+        grid: horizontal
+          ? { top: barGridTop, right: 24 + watermarkPad, bottom: 48 + watermarkPad, left: barGridLeft }
+          : { top: barGridTop, right: 24 + watermarkPad, bottom: 120 + watermarkPad, left: barGridLeft },
         xAxis: horizontal
           ? {
               type: 'value',
-              name: yLabel,
+              name: yAxisTitle,
               nameLocation: 'middle',
               nameGap: 50,
-              axisLabel: { formatter: isStacked ? '{value}%' : '{value}' },
-              max: isStacked ? 100 : undefined
+              nameRotate: 0,
+              nameTextStyle: axisTitleStyle,
+              axisLabel: { formatter: isStacked ? '{value}%' : '{value}', ...axisLabelStyle },
+              axisLine: axisLineStyle,
+              splitLine: splitLineStyle,
+              max: isStacked ? 100 : undefined,
             }
           : {
               type: 'category',
               data: categories,
-              axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle' }
+              name: xAxisTitle,
+              nameLocation: 'middle',
+              nameGap: 72,
+              nameRotate: 0,
+              nameTextStyle: axisTitleStyle,
+              axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle', ...axisLabelStyle },
+              axisLine: axisLineStyle,
             },
         yAxis: horizontal
           ? {
               type: 'category',
               data: categories,
-              axisLabel: { interval: 0 }
+              axisLabel: { interval: 0, ...axisLabelStyle },
+              axisLine: axisLineStyle,
             }
           : {
               type: 'value',
-              name: yLabel,
+              name: yAxisTitle,
               nameLocation: 'middle',
               nameRotate: 90,
               nameGap: 60,
-              nameTextStyle: { align: 'center', verticalAlign: 'middle' },
-              axisLabel: { formatter: isStacked ? '{value}%' : '{value}' },
-              max: isStacked ? 100 : undefined
+              nameTextStyle: { ...axisTitleStyle, align: 'center', verticalAlign: 'middle' },
+              axisLabel: { formatter: isStacked ? '{value}%' : '{value}', ...axisLabelStyle },
+              axisLine: axisLineStyle,
+              splitLine: splitLineStyle,
+              max: isStacked ? 100 : undefined,
             },
-        series
+        series,
+        graphic: barWatermark
       };
     }
 
@@ -251,8 +419,8 @@ export function ChartBlock({ visual, visualId }: Props) {
       const labelMap = (facetLabels as Record<string, string>) || {};
       const highlightSet = new Set(((highlightCategories as string[]) || []).map(normalizeCategory));
       const categoryLabelMap = (categoryLabels as Record<string, string>) || {};
-      const baseColor = (colors as Record<string, string>)?.default || '#2B3C63';
-      const specialColor = (colors as Record<string, string>)?.highlight || highlightColor || '#d1434b';
+      const baseColor = chartPalette.seriesMuted[1] || chartPalette.ink;
+      const specialColor = chartPalette.accent;
       const gridPaddingTop = 32;
       const perFacetHeight = facetHeight ?? 140;
       const gap = (facetGap ?? 32) + 8;
@@ -285,29 +453,33 @@ export function ChartBlock({ visual, visualId }: Props) {
           const displayLabel = categoryLabelMap[cat] || cat;
           const val = parseNum(r[y]);
           const isHighlight = highlightSet.has(cat);
-          const color = (colors as Record<string, string>)?.[cat] || (isHighlight ? specialColor : baseColor);
+          const color = isHighlight ? specialColor : baseColor;
           return { value: val, name: displayLabel, itemStyle: { color } };
         });
         const displayCats = cats.map(cat => categoryLabelMap[cat] || cat);
         const top = gridPaddingTop + idx * (perFacetHeight + gap) + titleOffset;
-        grids.push({ top, height: perFacetHeight, left: facetLeft, right: 24 });
+        grids.push({ top, height: perFacetHeight, left: facetLeft, right: 24 + watermarkPad });
         xAxes.push({
           type: 'value',
           gridIndex: idx,
-          name: idx === facetValues.length - 1 ? yLabel : '',
+          name: idx === facetValues.length - 1 ? yAxisTitle : '',
           nameLocation: 'middle',
           nameGap: 28,
+          nameRotate: 0,
+          nameTextStyle: axisTitleStyle,
           min: 0,
           max: maxValue || undefined,
-          axisLine: { show: true },
-          axisLabel: { formatter: '{value}' },
+          axisLine: axisLineStyle,
+          axisLabel: { formatter: '{value}', ...axisLabelStyle },
+          splitLine: splitLineStyle,
         });
         yAxes.push({
           type: 'category',
           gridIndex: idx,
           data: displayCats,
           inverse: true,
-          axisLabel: { interval: 0, fontSize: 12 },
+          axisLabel: { interval: 0, fontSize: 12, ...axisLabelStyle },
+          axisLine: axisLineStyle,
         });
         series.push({
           name: labelMap[facetValue] || facetValue,
@@ -322,12 +494,12 @@ export function ChartBlock({ visual, visualId }: Props) {
           text: labelMap[facetValue] || facetValue,
           left: facetLeft,
           top: Math.max(0, top - titleOffset),
-          textStyle: { fontSize: 12, fontWeight: 600, color: '#111' },
+          textStyle: { fontSize: 12, fontWeight: 600, color: chartPalette.ink },
         });
       });
 
       return {
-        backgroundColor: '#fff',
+        backgroundColor: chartPalette.background,
         tooltip: {
           trigger: 'item',
           formatter: (p: any) => `${p.name}: ${p.value}`
@@ -337,6 +509,7 @@ export function ChartBlock({ visual, visualId }: Props) {
         yAxis: yAxes,
         series,
         title: titles,
+        graphic: baseWatermark
       };
     }
 
@@ -349,10 +522,15 @@ export function ChartBlock({ visual, visualId }: Props) {
       const categoriesLine = Array.isArray(categoryOrder) && categoryOrder.length > 0
         ? categoryOrder.map(normalizeCategory)
         : Array.from(new Set(orderedRows.map(r => normalizeCategory(r[x]))));
+      const displayCategoriesLine = categoriesLine.map(cat => categoryLabelMap[cat] || cat);
+      const maxLabelLength = displayCategoriesLine.reduce((max, label) => Math.max(max, label.length), 0);
+      const forcedRotation = typeof xLabelRotate === 'number' ? xLabelRotate : null;
+      const xLabelRotation = forcedRotation ?? (maxLabelLength > 14 ? 35 : maxLabelLength > 10 ? 20 : 0);
+      const lineGridBottom = forcedRotation != null ? 120 : (xLabelRotation ? 96 : 64);
       const getRow = (cat: string, seriesName: string) =>
         orderedRows.find(r => normalizeCategory(r[x]) === cat && normalizeCategory(r[seriesField]) === seriesName);
 
-      const lineSeries = uniqueSeries.map(seriesName => {
+      const lineSeriesData = uniqueSeries.map(seriesName => {
         const valueKeyFromSpec = (seriesValueFields as Record<string, string> | undefined)?.[seriesName];
         const displayName = (seriesLabels as Record<string, string> | undefined)?.[seriesName] || seriesName;
         const data = categoriesLine.map(cat => {
@@ -363,52 +541,141 @@ export function ChartBlock({ visual, visualId }: Props) {
           const val = key ? parseNum(row[key]) : null;
           return Number.isFinite(val) ? val : null;
         });
+        return { seriesName, displayName, data };
+      });
+
+      const seriesValues = lineSeriesData.map(({ data }) =>
+        data.map((val) => (Number.isFinite(val as number) ? (val as number) : 0))
+      );
+      const highlightSeriesList = Array.isArray(highlightSeries) ? highlightSeries : [];
+      const highlightSet = new Set(highlightSeriesList.map(normalizeCategory));
+      const highlightColorMap = Object.fromEntries(
+        Object.entries((highlightSeriesColors as Record<string, string>) || {}).map(([key, value]) => [
+          normalizeCategory(key),
+          value
+        ])
+      );
+      const mutedColor = typeof mutedSeriesColor === 'string' ? mutedSeriesColor : chartPalette.light;
+      const mutedOpacity = typeof mutedSeriesOpacity === 'number' ? mutedSeriesOpacity : 0.3;
+      const mutedWidth = typeof mutedSeriesWidth === 'number' ? mutedSeriesWidth : 1.6;
+      const highlightWidth = typeof highlightSeriesWidth === 'number' ? highlightSeriesWidth : 3;
+      const mutedSymbol = typeof mutedSymbolSize === 'number' ? mutedSymbolSize : 4;
+      const highlightSymbol = typeof highlightSymbolSize === 'number' ? highlightSymbolSize : 7;
+      const mutedSeries = new Set<string>();
+      let seriesColorMap: Record<string, string>;
+      if (highlightSet.size > 0) {
+        seriesColorMap = {};
+        let highlightIdx = 0;
+        uniqueSeries.forEach(seriesName => {
+          const normalized = normalizeCategory(seriesName);
+          if (highlightSet.has(normalized)) {
+            const overrideColor = highlightColorMap[normalized];
+            const paletteColor = seriesPalette[highlightIdx % seriesPalette.length];
+            seriesColorMap[seriesName] = overrideColor || paletteColor;
+            highlightIdx += 1;
+          } else {
+            seriesColorMap[seriesName] = mutedColor;
+            mutedSeries.add(seriesName);
+          }
+        });
+      } else {
+        const highlightIndex = uniqueSeries.length === 1
+          ? 0
+          : uniqueSeries.length <= 3
+            ? (pickHighlightSeriesIndex(uniqueSeries) ?? pickHighlightIndexByTotals(seriesValues))
+            : undefined;
+        seriesColorMap = buildSeriesColorMap(uniqueSeries, highlightIndex, seriesPalette);
+      }
+      const lineSeries = lineSeriesData.map(({ seriesName, displayName, data }) => {
+        const isMuted = mutedSeries.has(seriesName);
         return {
           name: displayName,
           type: 'line',
           smooth: true,
           data,
-          itemStyle: { color: (colors as Record<string, string>)?.[seriesName] },
-          lineStyle: { width: 3 },
-          areaStyle: areaEnabled ? { opacity: 0.18 } : undefined,
+          showSymbol: !isMuted,
+          symbolSize: isMuted ? mutedSymbol : highlightSymbol,
+          itemStyle: {
+            color: seriesColorMap[seriesName],
+            opacity: isMuted ? mutedOpacity : 1
+          },
+          lineStyle: {
+            width: isMuted ? mutedWidth : highlightWidth,
+            color: seriesColorMap[seriesName],
+            opacity: isMuted ? mutedOpacity : 1
+          },
+          areaStyle: areaEnabled
+            ? {
+                opacity: isMuted ? 0.05 : 0.12,
+                color: seriesColorMap[seriesName]
+              }
+            : undefined,
         };
       });
+      const legendData = lineSeriesData
+        .filter(({ seriesName }) => !(legendOnlyHighlighted && highlightSet.size && mutedSeries.has(seriesName)))
+        .map(({ displayName }) => displayName);
 
+      const lineWatermark = buildWatermarkGraphic({ top: isNarrow ? 60 : 40 });
       return {
-        backgroundColor: '#fff',
+        backgroundColor: chartPalette.background,
         tooltip: { trigger: 'axis' },
-        legend: { top: 8, data: lineSeries.map(s => s.name) },
-        grid: { top: 48, right: 24, bottom: 96, left: 80 },
+        legend: { top: 8, data: legendData },
+        grid: {
+          top: 48,
+          right: 24 + watermarkPad,
+          bottom: lineGridBottom + watermarkPad,
+          left: typeof gridLeft === 'number' ? gridLeft : 56
+        },
         xAxis: {
           type: 'category',
           data: categoriesLine,
+          name: xAxisTitle,
+          nameLocation: 'middle',
+          nameGap: 100,
+          nameRotate: 0,
+          nameTextStyle: axisTitleStyle,
           axisTick: { alignWithLabel: true },
+          axisLine: axisLineStyle,
           axisLabel: {
             interval: 0,
-            rotate: 45,
+            rotate: xLabelRotation,
             formatter: (val: string) => categoryLabelMap[val] || val,
             margin: 12,
+            hideOverlap: true,
+            ...axisLabelStyle,
           }
         },
         yAxis: {
           type: 'value',
-          name: yLabel,
+          name: yAxisTitle,
           nameLocation: 'middle',
           nameRotate: 90,
-          nameGap: 60,
-          nameTextStyle: { align: 'center', verticalAlign: 'middle' }
+          nameGap: 44,
+          nameTextStyle: { ...axisTitleStyle, align: 'center', verticalAlign: 'middle' },
+          axisLabel: axisLabelStyle,
+          axisLine: axisLineStyle,
+          splitLine: splitLineStyle,
         },
-        series: lineSeries
+        series: lineSeries,
+        graphic: lineWatermark
       };
     }
 
     if (resolvedVisual.type === 'scatter') {
-      const isNarrow = typeof window !== 'undefined' ? window.innerWidth < 640 : false;
-      const yOrder = Array.isArray(yCategoryOrder) && yCategoryOrder.length > 0
-        ? yCategoryOrder.map(normalizeCategory)
-        : Array.from(new Set(orderedRows.map(r => normalizeCategory(r[y]))));
-      const yLabelMap = (yCategoryLabels as Record<string, string>) || (categoryLabels as Record<string, string>) || {};
-      const colorMap = (colors as Record<string, string>) || {};
+      const isSwapped = Boolean(swapAxes);
+      const categoryField = (isSwapped ? x : y) as string;
+      const valueField = (isSwapped ? y : x) as string;
+      const categoryOrderSource = isSwapped ? xCategoryOrder : yCategoryOrder;
+      const categoryOrder = Array.isArray(categoryOrderSource) && categoryOrderSource.length > 0
+        ? categoryOrderSource.map(normalizeCategory)
+        : Array.from(new Set(orderedRows.map(r => normalizeCategory(r[categoryField]))));
+      const categoryLabelMap =
+        (isSwapped
+          ? (xCategoryLabels as Record<string, string>) || (yCategoryLabels as Record<string, string>)
+          : (yCategoryLabels as Record<string, string>)) ||
+        (categoryLabels as Record<string, string>) ||
+        {};
       const colorFieldName = colorField as string | undefined;
       const symbolFieldName = symbolField as string | undefined;
       const symbolLookup = (symbolMap as Record<string, string>) || {};
@@ -430,23 +697,44 @@ export function ChartBlock({ visual, visualId }: Props) {
         grouped.set(groupKey, [...(grouped.get(groupKey) || []), row]);
       });
 
-      const series = Array.from(grouped.entries()).map(([groupName, groupRows]) => {
+      const groupedEntries = Array.from(grouped.entries()).map(([groupName, groupRows]) => {
         const symKey = symbolFieldName
           ? normalizeSymbolKey(groupRows[0]?.[symbolFieldName])
           : normalizeCategory(groupName) === normalizeCategory('All India') ? 'true' : 'false';
+        return { groupName, groupRows, symKey };
+      });
+      const highlightIndex = groupedEntries.findIndex(
+        ({ groupName, symKey }) => symKey === 'true' || /all india/i.test(groupName)
+      );
+      const groupNames = groupedEntries.map(({ groupName }) => groupName);
+      const groupColorMap = buildSeriesColorMap(
+        groupNames,
+        highlightIndex >= 0 ? highlightIndex : undefined,
+        seriesPalette
+      );
+
+      const series = groupedEntries.map(({ groupName, groupRows, symKey }) => {
         const seriesSymbol = symbolLookup[symKey] || 'circle';
         const seriesSize = symbolSizeLookup[symKey] || basePointSize;
-        const seriesColor = colorMap[groupName] || colorMap.default || '#2B3C63';
+        const seriesColor = groupColorMap[groupName];
 
         const data = groupRows.map(row => {
-          const xVal = parseNum(row[x]);
-          const rawY = normalizeCategory(row[y]);
-          const jitterX = jitterAmount ? (Math.random() * 2 - 1) * jitterAmount : 0;
-          const jitterY = jitterYAmount ? (Math.random() * 2 - 1) * jitterYAmount : 0;
+          const value = parseNum(row[valueField]);
+          const rawCategory = normalizeCategory(row[categoryField]);
+          const jitterValue = jitterAmount ? (Math.random() * 2 - 1) * jitterAmount : 0;
+          const jitterCategory = jitterYAmount ? (Math.random() * 2 - 1) * jitterYAmount : 0;
+
+          if (isSwapped) {
+            return {
+              value: [rawCategory, value + jitterValue],
+              symbolOffset: [jitterCategory, 0],
+              raw: row,
+            };
+          }
 
           return {
-            value: [xVal + jitterX, rawY],
-            symbolOffset: [0, jitterY],
+            value: [value + jitterValue, rawCategory],
+            symbolOffset: [0, jitterCategory],
             raw: row,
           };
         });
@@ -462,25 +750,25 @@ export function ChartBlock({ visual, visualId }: Props) {
         };
       });
 
-      const legendItems = Array.from(grouped.keys()).map(groupName => {
-        const symKey = symbolFieldName
-          ? normalizeSymbolKey(grouped.get(groupName)?.[0]?.[symbolFieldName])
-          : normalizeCategory(groupName) === normalizeCategory('All India') ? 'true' : 'false';
-        return { name: groupName, icon: symbolLookup[symKey] || 'circle' };
-      });
+      const legendItems = groupedEntries.map(({ groupName, symKey }) => ({
+        name: groupName,
+        icon: symbolLookup[symKey] || 'circle',
+      }));
+      const scatterRight = !isNarrow && legendItems.length ? 160 : 8;
+      const scatterWatermark = buildWatermarkGraphic({ top: isNarrow ? 60 : 8, right: scatterRight });
 
-      const maxX = orderedRows.reduce((m, row) => {
-        const val = parseNum(row[x]);
+      const maxValue = orderedRows.reduce((m, row) => {
+        const val = parseNum(row[valueField]);
         return Number.isFinite(val) ? Math.max(m, val) : m;
       }, 0);
-      const paddedMaxX = maxX > 0 ? Math.ceil((maxX * 1.02 + 2) / 10) * 10 : undefined;
+      const paddedMaxValue = maxValue > 0 ? Math.ceil((maxValue * 1.02 + 2) / 10) * 10 : undefined;
       const legendBase = {
         show: true,
         type: 'scroll',
         itemWidth: 12,
         itemHeight: 12,
         selectedMode: false,
-        textStyle: { color: '#111', fontSize: isNarrow ? 10 : 12 },
+        textStyle: { color: chartPalette.ink, fontSize: isNarrow ? 10 : 12 },
       };
       const mobileLegends = (() => {
         if (!legendItems.length || !isNarrow) return undefined;
@@ -492,47 +780,80 @@ export function ChartBlock({ visual, visualId }: Props) {
           { ...legendBase, orient: 'horizontal', top: 32, left: 12, right: 12, data: second }
         ];
       })();
+      const categoryAxisLabel = {
+        formatter: (val: string) => categoryLabelMap[val] || val,
+        fontSize: isNarrow ? 10 : 12,
+        ...axisLabelStyle,
+      } as Record<string, any>;
+      if (isSwapped) {
+        categoryAxisLabel.interval = 0;
+        categoryAxisLabel.rotate = typeof xLabelRotate === 'number' ? xLabelRotate : (isNarrow ? 22 : 0);
+        categoryAxisLabel.margin = 12;
+      }
+      const valueAxisTitle = isSwapped ? yAxisTitle : xAxisTitle;
+      const categoryAxisTitle = isSwapped ? xAxisTitle : yAxisTitle;
+      const valueAxis = {
+        type: 'value',
+        name: valueAxisTitle,
+        nameLocation: 'middle',
+        nameRotate: isSwapped ? 90 : 0,
+        nameGap: isSwapped ? 44 : 32,
+        nameTextStyle: isSwapped
+          ? { ...axisTitleStyle, align: 'center', verticalAlign: 'middle' }
+          : axisTitleStyle,
+        axisLabel: { formatter: '{value}', fontSize: isNarrow ? 9 : 12, hideOverlap: true, ...axisLabelStyle },
+        min: 0,
+        max: paddedMaxValue,
+        axisLine: axisLineStyle,
+        splitLine: splitLineStyle,
+      };
+      const categoryAxis = {
+        type: 'category',
+        data: categoryOrder,
+        axisLabel: categoryAxisLabel,
+        name: categoryAxisTitle,
+        nameLocation: 'middle',
+        nameRotate: isSwapped ? 0 : 90,
+        nameGap: isSwapped ? 32 : (isNarrow ? 18 : 24),
+        nameTextStyle: axisTitleStyle,
+        axisLine: axisLineStyle,
+      };
 
       return {
-        backgroundColor: '#fff',
+        backgroundColor: chartPalette.background,
         tooltip: {
           trigger: 'item',
           formatter: (p: any) => {
             const data = p?.data?.raw || {};
-            const stageRaw = normalizeCategory(data[y]);
-            const stageLabel = yLabelMap[stageRaw] || stageRaw;
+            const stageRaw = normalizeCategory(data[categoryField]);
+            const stageLabel = categoryLabelMap[stageRaw] || stageRaw;
             const stateLabel = labelField ? data[labelField] : colorFieldName ? data[colorFieldName] : '';
-            const val = parseNum(data[x]);
+            const val = parseNum(data[valueField]);
             return `${stateLabel || 'Value'} — ${stageLabel}<br/>GER: ${val}`;
           }
         },
         grid: isNarrow
-          ? { top: legendItems.length ? 72 : 56, right: 12, bottom: 84, left: 86 }
-          : { top: 64, right: legendItems.length ? 140 : 28, bottom: 64, left: 128 },
+          ? {
+              top: legendItems.length ? 72 : 56,
+              right: 12 + watermarkPad,
+              bottom: 84 + watermarkPad,
+              left: 86
+            }
+          : {
+              top: 64,
+              right: (legendItems.length ? 140 : 28) + watermarkPad,
+              bottom: 64 + watermarkPad,
+              left: 128
+            },
         legend: legendItems.length
           ? isNarrow
             ? mobileLegends
             : { ...legendBase, orient: 'vertical', top: 32, right: 12, data: legendItems }
           : undefined,
-        xAxis: {
-          type: 'value',
-          name: xLabel || yLabel || x,
-          nameLocation: 'middle',
-          nameGap: 32,
-          axisLabel: { formatter: '{value}', fontSize: isNarrow ? 9 : 12, hideOverlap: true },
-          min: 0,
-          max: paddedMaxX,
-          splitLine: { show: true },
-        },
-        yAxis: {
-          type: 'category',
-          data: yOrder,
-          axisLabel: { formatter: (val: string) => yLabelMap[val] || val, fontSize: isNarrow ? 10 : 12 },
-          name: yLabel,
-          nameLocation: 'start',
-          nameGap: isNarrow ? 8 : 12,
-        },
-        series
+        xAxis: isSwapped ? categoryAxis : valueAxis,
+        yAxis: isSwapped ? valueAxis : categoryAxis,
+        series,
+        graphic: scatterWatermark
       };
     }
 
@@ -554,90 +875,125 @@ export function ChartBlock({ visual, visualId }: Props) {
       }
     }
     const areaEnabled = Boolean(area);
+    const barItemStyle = resolvedVisual.type === 'bar'
+      ? {
+          color: chartPalette.accent,
+          ...(barBorder ? {
+            borderColor: (barBorder as any).color ?? chartPalette.ink,
+            borderWidth: (barBorder as any).width ?? 0.5,
+          } : {}),
+        }
+      : { color: chartPalette.accent };
     const series = [
       {
         name: yLabel || y,
         type: resolvedVisual.type === 'table' ? 'line' : resolvedVisual.type,
         data: seriesData,
         smooth: resolvedVisual.type === 'line',
-        areaStyle: resolvedVisual.type === 'line' && areaEnabled ? { opacity: 0.18 } : undefined,
+        areaStyle: resolvedVisual.type === 'line' && areaEnabled ? { opacity: 0.18, color: chartPalette.accent } : undefined,
         markLine: meanCategoryLabel ? {
           symbol: 'none',
-          label: { formatter: 'Mean distance', color: '#111' },
+          label: { formatter: 'Mean distance', color: chartPalette.ink },
           data: [{ xAxis: meanCategoryLabel }]
         } : undefined,
+        itemStyle: barItemStyle,
+        lineStyle: resolvedVisual.type === 'line' ? { color: chartPalette.accent, width: 3 } : undefined,
         ...(resolvedVisual.type === 'bar'
           ? {
               barGap: barGap ?? '0%',
               barCategoryGap: barCategoryGap ?? '0%',
-              itemStyle: barBorder ? {
-                borderColor: (barBorder as any).color ?? '#111',
-                borderWidth: (barBorder as any).width ?? 0.5
-              } : undefined,
             }
           : {})
       }
     ];
 
     return {
-      backgroundColor: '#fff',
+      backgroundColor: chartPalette.background,
       tooltip: { trigger: 'axis' },
       legend: { top: 8 },
-      toolbox: { right: 16, feature: { saveAsImage: { pixelRatio: 2 } } },
-      grid: { top: 48, right: 24, bottom: 120, left: 80 },
+      grid: { top: 48, right: 24 + watermarkPad, bottom: 120 + watermarkPad, left: 80 },
       xAxis: {
         type: 'category',
         data: categories,
-        axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle' }
+        name: xAxisTitle,
+        nameLocation: 'middle',
+        nameGap: 72,
+        nameRotate: 0,
+        nameTextStyle: axisTitleStyle,
+        axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle', ...axisLabelStyle },
+        axisLine: axisLineStyle,
       },
       yAxis: {
         type: 'value',
-        name: yLabel,
+        name: yAxisTitle,
         nameLocation: 'middle',
-        nameRotate: 45,
+        nameRotate: 90,
         nameGap: 60,
-        nameTextStyle: { align: 'center', verticalAlign: 'middle' }
+        nameTextStyle: { ...axisTitleStyle, align: 'center', verticalAlign: 'middle' },
+        axisLabel: axisLabelStyle,
+        axisLine: axisLineStyle,
+        splitLine: splitLineStyle,
       },
-      series
+      series,
+      graphic: baseWatermark
     };
   }, [rows, resolvedVisual]);
 
   if (!resolvedVisual) return <div>Chart configuration missing — pass a `visual` prop from the server or a valid visualId.</div>;
+  const canDownload = rows.length > 0 && !error;
+  const filenameBase = resolvedVisual.id || resolvedVisual.title || 'chart';
+  const handleDownload = () => {
+    const instance = chartRef.current?.getEchartsInstance?.();
+    if (!instance) return;
+    downloadChartImage({
+      instance,
+      title: resolvedVisual.title,
+      filename: filenameBase.replace(/\s+/g, '-').toLowerCase()
+    });
+  };
+  const sourceUrl = resolvedVisual.source?.url;
+  const isDownloadSource = Boolean(sourceUrl && /\.(csv|tsv)(\?|$)/i.test(sourceUrl));
 
   return (
     <figure className="not-prose mx-auto my-6 max-w-4xl px-3">
-      <figcaption className="mb-2">
-        <div className="text-lg font-semibold text-foreground">{resolvedVisual.title}</div>
-        {resolvedVisual.caption && <div className="text-sm text-muted-foreground">{resolvedVisual.caption}</div>}
-      </figcaption>
+      <div className="mb-2 text-lg font-semibold text-foreground">{resolvedVisual.title}</div>
 
       {error ? (
         <div style={{ color: 'red' }}>{error}</div>
       ) : rows.length === 0 ? (
         <div>Loading data…</div>
       ) : (
-        <ReactECharts option={option} notMerge lazyUpdate style={{ width: '100%', height: chartHeight }} />
+        <div className="relative pb-8">
+          <ReactECharts
+            ref={chartRef}
+            option={option}
+            notMerge
+            lazyUpdate
+            style={{ width: '100%', height: chartHeight }}
+          />
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={!canDownload}
+            aria-label="Download chart"
+            className="absolute bottom-0 right-2 rounded-md border border-border bg-background/95 p-2 text-foreground shadow-sm transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+          </button>
+        </div>
       )}
 
       {resolvedVisual.source && (
-        <figcaption className="mt-2 text-sm text-muted-foreground">
-          <b>Source:</b>{' '}
-          {resolvedVisual.source.url ? (
+        <div className="mt-2 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">Source:</span>{' '}
+          {resolvedVisual.source.url && !isDownloadSource ? (
             <a href={resolvedVisual.source.url} target="_blank" rel="noreferrer">
               {resolvedVisual.source.name || resolvedVisual.source.url}
             </a>
           ) : (
             resolvedVisual.source.name
           )}
-          {resolvedVisual.spec?.dataUrl && (
-             <>
-              {' • '}
-              <a href={resolvedVisual.spec.dataUrl} download>
-                Download CSV
-              </a>
-            </>
-          )}
-        </figcaption>
+        </div>
       )}
     </figure>
   );

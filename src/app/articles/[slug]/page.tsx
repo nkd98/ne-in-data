@@ -144,6 +144,7 @@ export default async function ArticlePage({ params }: { params: Promise<RoutePar
         playground={playground}
         blocks={article.blocks}
         updated={format(new Date(article.updatedAt), 'MMMM yyyy')}
+        compactBlocks={article.compactBlocks}
       />
       <RelatedArticles relatedArticleIds={article.relatedArticleIds} currentSlug={article.slug} />
     </>

@@ -4,6 +4,10 @@ import { useEffect, useState, useMemo, useId, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { EChartsOption } from 'echarts';
 import { csvParse, tsvParse } from 'd3-dsv';
+import { downloadChartImage } from '@/lib/chart-export';
+import { buildWatermarkGraphic } from '@/lib/chart-watermark';
+import { Download } from 'lucide-react';
+import { buildSeriesColorMap, chartPalette, pickHighlightIndexByTotals, pickHighlightSeriesIndex } from '@/lib/chart-palette';
 
 type Row = Record<string, string | number>;
 
@@ -36,6 +40,7 @@ export default function BarStacked({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const chartRef = useRef<any>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
 
   useEffect(() => {
@@ -157,18 +162,10 @@ export default function BarStacked({
   }, [raw, tolerancePct]);
 
   const fontSans = 'var(--font-sans, Inter, system-ui, sans-serif)';
-  const bigColor = '#2B3C63';
-  const smallColor = '#0FA77E';
-  const labelColor = 'hsl(var(--primary-foreground))';
-  const borderColor = 'hsl(var(--border))';
-  const mutedColor = 'hsl(var(--muted-foreground))';
-  const legendColor = 'hsl(var(--foreground))';
-  const tooltipBg = 'hsl(var(--card))';
-  const palette = [bigColor, smallColor, '#F36D52', '#6B7280'];
-  const colorMap = new Map<string, string>();
-  seriesKeys.forEach((key, idx) => {
-    colorMap.set(key, palette[idx % palette.length]);
-  });
+  const borderColor = chartPalette.grid;
+  const mutedColor = chartPalette.muted;
+  const legendColor = chartPalette.ink;
+  const tooltipBg = chartPalette.background;
   const uniqueId = useId();
   const titleId = title ? `${uniqueId}-title` : undefined;
   const descriptionId = description ? `${uniqueId}-description` : undefined;
@@ -278,7 +275,17 @@ export default function BarStacked({
   const showLabels = availableWidth >= 90;
   const yAxisInverse = typeof indexScale?.reverse === 'boolean' ? indexScale.reverse : true;
   const categories = useMemo(() => data.map((row) => String(row[idxKey] ?? '')), [data, idxKey]);
-  const chartColors = seriesKeys.map((key) => colorMap.get(key) ?? bigColor);
+  const seriesValues = seriesKeys.map((key) =>
+    data.map((row) => {
+      const val = Number(row[key]);
+      return Number.isFinite(val) ? val : 0;
+    })
+  );
+  const highlightIndex = seriesKeys.length <= 3
+    ? (pickHighlightSeriesIndex(seriesKeys) ?? pickHighlightIndexByTotals(seriesValues))
+    : undefined;
+  const seriesColorMap = buildSeriesColorMap(seriesKeys, highlightIndex);
+  const chartColors = seriesKeys.map((key) => seriesColorMap[key]);
   const valueSuffix = scaleToPercent ? '%' : '';
   const chartOption = useMemo<EChartsOption>(() => {
     if (!seriesKeys.length) return {} as EChartsOption;
@@ -294,10 +301,10 @@ export default function BarStacked({
       stack: 'total',
       barMaxWidth: 36,
       emphasis: { focus: 'series' as const },
-      itemStyle: { color: chartColors[idx] ?? bigColor },
+      itemStyle: { color: chartColors[idx] ?? chartPalette.seriesMuted[0] },
       label: {
         show: showLabels,
-        color: '#FFFFFF',
+        color: chartPalette.background,
         fontFamily: fontSans,
         fontSize: labelFontSize,
         fontWeight: 600,
@@ -357,6 +364,8 @@ export default function BarStacked({
         name: axisBottomLegend,
         nameLocation: 'middle',
         nameGap: axisBottomLegendOffset,
+        nameRotate: 0,
+        nameTextStyle: { color: legendColor, fontFamily: fontSans, fontSize: axisFontSize, fontWeight: 700 },
         max: scaleToPercent ? 100 : undefined,
         axisLabel: {
           color: mutedColor,
@@ -388,13 +397,13 @@ export default function BarStacked({
         axisTick: { show: false },
       },
       series,
+      graphic: buildWatermarkGraphic(),
     };
   }, [
     seriesKeys,
     data,
     chartColors,
     showLabels,
-    labelColor,
     fontSans,
     labelFontSize,
     valueSuffix,
@@ -436,6 +445,16 @@ export default function BarStacked({
     const columns = raw.length ? Object.keys(raw[0]).join(', ') : '—';
     return renderStatus(`No chartable series found. Columns available: ${columns}`);
   }
+
+  const handleDownloadChart = () => {
+    const instance = chartRef.current?.getEchartsInstance?.();
+    if (!instance) return;
+    downloadChartImage({
+      instance,
+      title: title || 'Chart',
+      filename: (title || 'chart').replace(/\s+/g, '-').toLowerCase()
+    });
+  };
 
   return (
     <figure
@@ -495,12 +514,23 @@ export default function BarStacked({
             aria-describedby={describedBy}
             aria-label="Stacked horizontal bar chart showing share of tea area by grower type and district"
           >
-            <ReactECharts option={chartOption} notMerge lazyUpdate style={{ height: '100%', width: '100%' }} />
+            <ReactECharts
+              ref={chartRef}
+              option={chartOption}
+              notMerge
+              lazyUpdate
+              style={{ height: '100%', width: '100%' }}
+            />
+            <button
+              type="button"
+              onClick={handleDownloadChart}
+              aria-label="Download chart"
+              className="absolute bottom-2 right-2 rounded-md border border-border bg-background/95 p-2 text-foreground shadow-sm transition hover:bg-muted"
+            >
+              <Download className="h-4 w-4" />
+            </button>
           </div>
         </div>
-      </div>
-      <div className="mt-3 flex justify-end text-[10px] font-semibold uppercase tracking-[0.3em] text-muted-foreground/60">
-        Northeast in Data
       </div>
 
       {(source || updated) && (

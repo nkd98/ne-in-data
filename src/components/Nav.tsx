@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet';
 import { Logo } from './logo';
 import React from 'react';
 
@@ -61,6 +61,7 @@ export function Nav() {
                           </Button>
                       </SheetTrigger>
                       <SheetContent>
+                          <SheetTitle className="sr-only">Navigation</SheetTitle>
                           <nav className="mt-8 flex flex-col gap-4">
                               {navLinks.map(link => (
                                   <Link

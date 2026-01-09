@@ -14,38 +14,31 @@ import { InsightCard } from "@/components/insight-card";
 
 const topics = getTopics().slice(0, 8);
 const insights = getArticles().slice(0, 3);
+const featuredInsight = insights[0];
+const secondaryInsights = insights.slice(1);
 
 export default function Home() {
   return (
     <>
-      <Hero />
+      <Hero topics={topics} />
       <div className="container mx-auto px-4 py-12 md:py-16">
-
-        {/* Explore by Theme Section */}
-        <section id="explore" className="mb-16 scroll-mt-20">
-          <h2 className="mb-8 text-center text-3xl font-bold font-display tracking-tight md:text-4xl">
-            Explore by theme
-          </h2>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {topics.map(topic => (
-              <Button key={topic.id} variant="outline" size="sm" asChild>
-                <Link href={`/topics/${topic.slug}`} className="transition-all hover:bg-primary/10 hover:shadow-md">
-                   {topic.name}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </section>
 
         {/* Latest Insights Section */}
         <section>
-          <h2 className="mb-8 text-center text-3xl font-bold font-display tracking-tight md:text-4xl">
+          <h2 className="mb-8 text-center text-2xl font-bold font-display tracking-tight md:text-4xl">
             Latest insights
           </h2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-             {insights.map((insight, index) => (
-                <InsightCard key={insight.slug} article={insight} layout={index === 0 ? 'featured' : 'compact'} />
-             ))}
+          <div className="flex flex-col gap-8 lg:flex-row">
+            {featuredInsight && (
+              <div className="lg:w-[58%]">
+                <InsightCard article={featuredInsight} layout="featured" />
+              </div>
+            )}
+            <div className="flex flex-col gap-8 lg:w-[42%]">
+              {secondaryInsights.map((insight) => (
+                <InsightCard key={insight.slug} article={insight} layout="compact" />
+              ))}
+            </div>
           </div>
         </section>
       
@@ -53,7 +46,7 @@ export default function Home() {
       </div>
       
       {/* Newsletter Section */}
-      <section className="bg-secondary/50 py-16 dark:bg-secondary/20">
+      <section className="border-t border-border bg-background py-16">
         <form
           action="https://buttondown.email/api/emails/embed-subscribe/northeastindata"
           method="post"

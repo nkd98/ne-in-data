@@ -17,19 +17,15 @@ const article: Article = {
     id: 'assam-tea-landscape',
     alt: 'Aerial view of tea plantations showing both small holdings and large estates in Assam'
   },
-  layout: 'tea-playground',
+
   blocks: [
-    {
-      type: 'intro',
-      content: 'The landscape of tea cultivation in Assam is experiencing a significant transformation, with small tea growers playing an increasingly important role alongside traditional large estates. This analysis examines the distribution of tea cultivation area across different districts, highlighting the emerging dual structure of the industry.'
-    },
     {
       type: 'h2',
       content: 'Statewide Snapshot'
     },
     {
       type: 'p',
-      content: 'State-level data shows that while small growers make up nearly all registered producers, large estates still command a larger share of tea land and harvest about half of the output. The chart below contrasts registrations, area, and production share across the two groups.'
+      content: 's',
     },
     {
       type: 'chart',

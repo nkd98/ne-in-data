@@ -50,6 +50,7 @@ export interface Article {
   };
   blocks: Block[];
   relatedArticleIds: string[];
+  compactBlocks?: boolean;
   metric?: {
     value: string;
     label: string;
