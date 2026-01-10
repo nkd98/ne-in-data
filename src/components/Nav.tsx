@@ -25,7 +25,7 @@ export function Nav() {
 
   const isLinkActive = (link: {href: string}) => {
     if (link.href === '/about') {
-        return pathname.startsWith('/about') || pathname.startsWith('/team');
+        return pathname.startsWith('/about');
     }
     return pathname === link.href;
   }

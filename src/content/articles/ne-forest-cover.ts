@@ -7,8 +7,8 @@ const article: Article = {
   authorIds: ['niruj'],
   topicIds: ['infrastructure'],
   status: 'published',
-  publishedAt: '2025-11-01',
-  updatedAt: '2025-11-01',
+  publishedAt: '2026-01-10',
+  updatedAt: '2026-01-10',
   readingTime: 3,
   compactBlocks: true,
   seo: {
@@ -36,21 +36,22 @@ const article: Article = {
       content: 'The first chart shows annual forest loss in the Northeast from 2001 to 2023.'
     },
     {
-      type: 'p',
-      content: 'For more than a decade, forest loss moved within a relatively narrow range. In the early 2000s and through much of the 2010s, the region was losing roughly 30,000 to 50,000 hectares of forest each year. Some years were worse than others, but the overall level was fairly stable.'
+      type: 'chart',
+      visualId: 'ne-forest-loss-area'
     },
     {
       type: 'p',
-      content: 'That changed after 2013. Forest loss rises quickly, reaching a peak around 2016-17, when close to 160,000 hectares were lost in a single year. Losses fall after that peak, but they do not return to earlier levels. Since then, annual forest loss has remained much higher than before, usually around 90,000 to 110,000 hectares per year.'
+      content: 'For more than a decade, forest loss moved within a relatively narrow range. In the early 2000s and into the early 2010s, the region was losing roughly 30,000 to 60,000 hectares of forest each year. Some years were worse than others, but the overall level was fairly stable.'
+    },
+    {
+      type: 'p',
+      content: 'That changed after 2013. Forest loss rises quickly, reaching a peak around 2017, when close to 157,000 hectares were lost in a single year. Losses fall after that peak, but they do not return to earlier levels. Since then, annual forest loss has remained much higher than before, usually around 95,000 to 113,000 hectares per year.'
     },
     {
       type: 'p',
       content: 'So the story is not just about one bad year. It is about a shift to a higher level of forest loss that has persisted.'
     },
-    {
-      type: 'chart',
-      visualId: 'ne-forest-loss-area'
-    },
+
     {
       type: 'h2',
       content: 'The increase is not evenly spread across states'
@@ -60,8 +61,12 @@ const article: Article = {
       content: 'The regional trend hides big differences across states, which become clear in the second chart.'
     },
     {
+      type: 'chart',
+      visualId: 'ne-forest-loss-state-lines'
+    },
+    {
       type: 'p',
-      content: 'Mizoram stands out most clearly. Forest loss there stays relatively low for years and then rises sharply in the mid-2010s, crossing 30,000 hectares per year at its peak. Losses fall afterward, but remain well above earlier levels.'
+      content: 'Mizoram stands out most clearly. Forest loss there stays relatively low for years and then rises sharply in the mid-2010s, approaching 30,000 hectares per year at its peak. Losses fall afterward, but remain well above earlier levels.'
     },
     {
       type: 'p',
@@ -75,10 +80,7 @@ const article: Article = {
       type: 'p',
       content: 'Sikkim looks very different from the rest. Forest loss remains minimal throughout the period.'
     },
-    {
-      type: 'chart',
-      visualId: 'ne-forest-loss-state-lines'
-    },
+ 
     {
       type: 'h2',
       content: 'Forest gain exists, but it does not make up for the loss'
@@ -88,17 +90,18 @@ const article: Article = {
       content: 'The third chart compares how much forest was lost with how much was gained.'
     },
     {
+      type: 'chart',
+      visualId: 'ne-forest-loss-vs-gain'
+    },
+    {
       type: 'p',
       content: 'In almost every state, total forest loss is much larger than forest gain. Assam and Mizoram have lost the most forest overall, while gains remain far smaller. The same pattern holds for Arunachal Pradesh, Nagaland, Manipur, and Meghalaya: some areas have gained tree cover, but not enough to offset what has been lost.'
     },
     {
       type: 'p',
-      content: 'Sikkim is again the exception, with very small losses and modest gains, leaving it close to balance.'
+      content: 'Sikkim is again the exception, with very small losses and modest gains, leaving it with a net gain overall.'
     },
-    {
-      type: 'chart',
-      visualId: 'ne-forest-loss-vs-gain'
-    },
+  
     {
       type: 'h2',
       content: 'What this adds up to'
@@ -106,14 +109,6 @@ const article: Article = {
     {
       type: 'p',
       content: 'Taken together, the charts show a clear pattern. Forest loss in Northeast India was relatively moderate for many years, then rose sharply in the mid-2010s and has stayed high since. A few states account for a large share of this loss, while others contribute less. Across most of the region, forest gain has not kept pace with forest loss.'
-    },
-    {
-      type: 'p',
-      content: 'These charts describe what has happened. They do not explain why. Answering that requires looking beyond the data, to land use, livelihoods, and how forests are managed.'
-    },
-    {
-      type: 'sources',
-      content: 'Supabase dataset compiled from satellite-derived tree cover loss (2001-2023).'
     }
   ],
   relatedArticleIds: ['north-east-education-ger', 'assam-employment-trends-2011-2024']

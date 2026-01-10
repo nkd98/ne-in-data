@@ -12,6 +12,14 @@ import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRo
 import { downloadChartImage } from '@/lib/chart-export';
 import { buildWatermarkGraphic } from '@/lib/chart-watermark';
 import { chartPalette } from '@/lib/chart-palette';
+import {
+  buildAxisLabelStyle,
+  buildAxisTitleStyle,
+  buildTooltipStyle,
+  chartAxisLineStyle,
+  chartSplitLineStyle,
+  chartTextStyle,
+} from '@/lib/chart-theme';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
@@ -31,9 +39,9 @@ const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOpti
   const categories = rows.map((row) => String(row?.[spec.x] ?? ''));
   const values = rows.map((row) => parseValue(row?.[spec.y]));
   const primaryColor = chartPalette.accent;
-  const axisColor = chartPalette.axis;
-  const borderColor = chartPalette.grid;
-  const axisTitleStyle = { fontWeight: 700 };
+  const axisTitleStyle = buildAxisTitleStyle();
+  const axisLabelStyle = buildAxisLabelStyle();
+  const tooltipStyle = buildTooltipStyle();
   const formatFieldLabel = (value?: string) => {
     if (!value) return '';
     return value
@@ -55,7 +63,9 @@ const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOpti
   const yAxisTitle = withUnits(spec.yLabel || formatFieldLabel(spec.y), visual.units);
 
   return {
-    tooltip: { trigger: 'axis' },
+    backgroundColor: chartPalette.background,
+    textStyle: chartTextStyle,
+    tooltip: { ...tooltipStyle, trigger: 'axis' },
     grid: { top: 32, right: 16, bottom: 56, left: 64 },
     xAxis: {
       type: 'category' as const,
@@ -65,8 +75,8 @@ const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOpti
       nameGap: 40,
       nameRotate: 0,
       nameTextStyle: axisTitleStyle,
-      axisLabel: { color: axisColor },
-      axisLine: { lineStyle: { color: borderColor } },
+      axisLabel: axisLabelStyle,
+      axisLine: chartAxisLineStyle,
       axisTick: { alignWithLabel: true },
     },
     yAxis: {
@@ -76,9 +86,9 @@ const buildCartesianOption = (visual: Visual, type: 'line' | 'bar'): EChartsOpti
       nameRotate: 90,
       nameGap: 46,
       nameTextStyle: axisTitleStyle,
-      axisLabel: { color: axisColor },
-      axisLine: { lineStyle: { color: borderColor } },
-      splitLine: { lineStyle: { color: borderColor, opacity: 0.4 } },
+      axisLabel: axisLabelStyle,
+      axisLine: chartAxisLineStyle,
+      splitLine: chartSplitLineStyle,
     },
     series: [
       {

@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 
 const aboutTabs = [
   { href: '/about', label: 'About' },
-  { href: '/team', label: 'Team' },
 ];
 
 export default function AboutLayout({

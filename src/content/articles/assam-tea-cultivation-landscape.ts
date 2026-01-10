@@ -7,8 +7,8 @@ const article: Article = {
   authorIds: ['niruj'],
   topicIds: ['agriculture'],
   status: 'published',
-  publishedAt: '2025-11-01',
-  updatedAt: '2025-11-01',
+  publishedAt: '2026-01-10',
+  updatedAt: '2026-01-10',
   readingTime: 5,
   compactBlocks: true,
   seo: {
@@ -52,25 +52,23 @@ const article: Article = {
       visualId: 'tea-growers-distribution'
     },
     {
-      type: 'h2',
-      content: 'Regional variations'
+      type: 'p',
+      content: 'Morigaon, Golaghat, and Hailakandi show 100% of tea area under large growers. Several others are close to that, such as Sribhumi (99%) and Chirang (98%).'
     },
     {
       type: 'p',
-      content: 'District-level splits differ sharply: Dhemaji and Karbi Anglong are now overwhelmingly small-grower territory, while districts such as Morigaon and Golaghat remain dominated by large estates. Local land history and institutional support are key drivers of these differences.'
+      content: 'At the other end are districts where small growers operate most tea land. Dhemaji stands out, with 94% of tea area under small growers (and only 6% under large growers). Karbi Anglong (70% small) and Bongaigaon (60% small) also tilt strongly toward small growers.'
+    },
+    {
+      type: 'p',
+      content: 'Many well-known tea districts sit in the middle. For example, Dibrugarh is 60% large / 40% small, and Tinsukia is 59% large / 41% small. These districts still have more estate land, but small growers now hold a substantial share.'
     },
     {
       type: 'p',
       content: "Small tea growers have emerged as a vital force in Assam's tea industry, commanding entire districts in some cases, even while large estates still anchor overall production."
-    },
-    {
-      type: 'p',
-      content: 'Analysis relies on the Statistical Handbook of Assam (2023-24). Small growers are defined as those with holdings up to 10.12 hectares (25 acres); statewide share values are taken directly from handbook tables and district values from the accompanying CSV extract.'
-    },
-    {
-      type: 'sources',
-      content: 'Statistical Handbook of Assam, 2023-24; district-level cultivation statistics compiled by the Tea Board of India.'
     }
+
+
   ],
   relatedArticleIds: ['assam-tea-exports-composition', 'assam-employment-trends-2011-2024']
 };

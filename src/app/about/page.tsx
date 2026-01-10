@@ -2,20 +2,17 @@ export default function AboutPage() {
   return (
     <div className="prose prose-lg mx-auto max-w-none dark:prose-invert lg:prose-xl prose-p:font-body prose-headings:font-display">
       <p>
-        Northeast in Data is an independent initiative that uses evidence to
-        understand the region, its people, society, and economy. We turn
-        public data into clear, visual explanations so complex issues are
-        easier to see and discuss.
+        Northeast in Data is an independent initiative that uses evidence to understand the region, its people, society, and economy. We turn public data into clear, visual explanations so complex issues are easier to see and discuss.
+
       </p>
       <p>
-        Our work focuses on questions that shape everyday life in the
-        Northeast — how people work, move, learn, and adapt. Each piece is
-        built from reliable, open sources and presented with context and
-        transparency.
+  
+        Our work focuses on questions that shape everyday life in the Northeast: how people work, move, learn, and adapt. Each piece is built from reliable, open sources and presented with context and transparency. The project is currently maintained by a single independent researcher.
+
+ 
       </p>
       <p>
-        The goal is simple: bring clarity to the region through data, and
-        support more informed conversation and decision-making.
+         Our goal is simple: to bring clarity to the region through data and support more informed conversation and decision making.
       </p>
 
 
@@ -41,6 +38,15 @@ export default function AboutPage() {
       <h2 className="mt-16">Support the project</h2>
       <p>
           If our work helps you, consider citing it, sharing it with others, or acknowledging it in your writing. Every mention helps keep open, data-driven work from the Northeast visible.
+      </p>
+      <p>
+        UPI:{" "}
+        <a
+          href="upi://pay?pa=7576081608-2@ybl"
+          className="text-primary hover:underline"
+        >
+          7576081608-2@ybl
+        </a>
       </p>
 
       <h2 className="mt-16">Collaborate</h2>

@@ -17,15 +17,9 @@ export function Footer() {
             Contact
           </Link>
           <span className="hidden md:inline">·</span>
-          <a 
-            href="https://www.buymeacoffee.com/yourhandle" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-primary hover:underline"
-            aria-label="Support Northeast in Data"
-          >
-            ☕ Support
-          </a>
+          <Link href="/about" className="text-primary hover:underline">
+            Support
+          </Link>
         </div>
         <p className="mt-4 text-xs">
           All content is open for reuse with attribution (CC BY 4.0 unless noted).

@@ -8,6 +8,16 @@ import { downloadChartImage } from '@/lib/chart-export';
 import { buildWatermarkGraphic } from '@/lib/chart-watermark';
 import { Download } from 'lucide-react';
 import { buildSeriesColorMap, chartPalette, pickHighlightIndexByTotals, pickHighlightSeriesIndex } from '@/lib/chart-palette';
+import {
+  buildAxisLabelStyle,
+  buildAxisTitleStyle,
+  buildLegendTextStyle,
+  buildTooltipStyle,
+  chartAxisLineStyle,
+  chartFontFamily,
+  chartSplitLineStyle,
+  chartTextStyle,
+} from '@/lib/chart-theme';
 
 type Row = Record<string, string | number>;
 
@@ -161,11 +171,6 @@ export default function BarStacked({
     };
   }, [raw, tolerancePct]);
 
-  const fontSans = 'var(--font-sans, Inter, system-ui, sans-serif)';
-  const borderColor = chartPalette.grid;
-  const mutedColor = chartPalette.muted;
-  const legendColor = chartPalette.ink;
-  const tooltipBg = chartPalette.background;
   const uniqueId = useId();
   const titleId = title ? `${uniqueId}-title` : undefined;
   const descriptionId = description ? `${uniqueId}-description` : undefined;
@@ -289,6 +294,10 @@ export default function BarStacked({
   const valueSuffix = scaleToPercent ? '%' : '';
   const chartOption = useMemo<EChartsOption>(() => {
     if (!seriesKeys.length) return {} as EChartsOption;
+    const axisLabelStyle = buildAxisLabelStyle(axisFontSize);
+    const axisTitleStyle = buildAxisTitleStyle(axisFontSize);
+    const legendTextStyle = buildLegendTextStyle(legendFontSize);
+    const tooltipStyle = buildTooltipStyle(axisFontSize);
     const makeSeriesData = (key: string) =>
       data.map((row) => {
         const val = Number(row[key]);
@@ -305,7 +314,7 @@ export default function BarStacked({
       label: {
         show: showLabels,
         color: chartPalette.background,
-        fontFamily: fontSans,
+        fontFamily: chartFontFamily,
         fontSize: labelFontSize,
         fontWeight: 600,
         formatter: (params: any) => {
@@ -319,6 +328,7 @@ export default function BarStacked({
 
     return {
       color: chartColors,
+      textStyle: chartTextStyle,
       grid: {
         top: margin.top,
         right: margin.right,
@@ -327,13 +337,9 @@ export default function BarStacked({
         containLabel: true,
       },
       tooltip: {
+        ...tooltipStyle,
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
-        backgroundColor: tooltipBg,
-        borderColor,
-        borderWidth: 1,
-        padding: 10,
-        textStyle: { color: legendColor, fontFamily: fontSans, fontSize: 12 },
         formatter: (params: any) => {
           const list = Array.isArray(params) ? params : [params];
           if (!list.length) return '';
@@ -354,7 +360,7 @@ export default function BarStacked({
             show: true,
             left: margin.left > 0 ? margin.left : 0,
             top: 0,
-            textStyle: { color: legendColor, fontFamily: fontSans, fontSize: legendFontSize },
+            textStyle: legendTextStyle,
             itemGap: chartWidth && chartWidth < 540 ? 8 : 16,
             icon: 'roundRect',
           }
@@ -365,21 +371,19 @@ export default function BarStacked({
         nameLocation: 'middle',
         nameGap: axisBottomLegendOffset,
         nameRotate: 0,
-        nameTextStyle: { color: legendColor, fontFamily: fontSans, fontSize: axisFontSize, fontWeight: 700 },
+        nameTextStyle: axisTitleStyle,
         max: scaleToPercent ? 100 : undefined,
         axisLabel: {
-          color: mutedColor,
-          fontFamily: fontSans,
-          fontSize: axisFontSize,
+          ...axisLabelStyle,
           formatter: (value: string | number) => {
             if (!scaleToPercent) return `${value}`;
             const numeric = Number(value);
             return Number.isFinite(numeric) ? `${numeric}%` : `${value}%`;
           },
         },
-        axisLine: { lineStyle: { color: borderColor } },
+        axisLine: chartAxisLineStyle,
         axisTick: { show: false },
-        splitLine: { lineStyle: { color: borderColor, opacity: 0.4 } },
+        splitLine: chartSplitLineStyle,
       },
       yAxis: {
         type: 'category',
@@ -387,9 +391,7 @@ export default function BarStacked({
         data: categories,
         axisLabel: {
           show: true,
-          color: mutedColor,
-          fontFamily: fontSans,
-          fontSize: axisFontSize,
+          ...axisLabelStyle,
           align: 'right',
           margin: 4,
         },
@@ -404,23 +406,18 @@ export default function BarStacked({
     data,
     chartColors,
     showLabels,
-    fontSans,
     labelFontSize,
     valueSuffix,
     margin.top,
     margin.right,
     margin.bottom,
     margin.left,
-    tooltipBg,
-    borderColor,
-    legendColor,
     categories,
     legendFontSize,
     chartWidth,
     axisBottomLegend,
     axisBottomLegendOffset,
     scaleToPercent,
-    mutedColor,
     axisFontSize,
     yAxisInverse,
   ]);

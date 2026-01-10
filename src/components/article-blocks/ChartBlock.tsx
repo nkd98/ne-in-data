@@ -10,6 +10,16 @@ import { downloadChartImage } from '@/lib/chart-export';
 import { buildWatermarkGraphic } from '@/lib/chart-watermark';
 import { Download } from 'lucide-react';
 import { buildSeriesColorMap, chartPalette, pickHighlightIndexByTotals, pickHighlightSeriesIndex } from '@/lib/chart-palette';
+import {
+  buildAxisLabelStyle,
+  buildAxisTitleStyle,
+  buildLegendTextStyle,
+  buildTooltipStyle,
+  chartAxisLineStyle,
+  chartFontFamily,
+  chartSplitLineStyle,
+  chartTextStyle,
+} from '@/lib/chart-theme';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
@@ -202,6 +212,13 @@ export function ChartBlock({ visual, visualId }: Props) {
       xCategoryLabels,
       pointSize,
       xLabelRotate,
+      xLabelInterval,
+      legendTop,
+      legendLeft,
+      gridTop,
+      gridBottom,
+      watermarkTop,
+      watermarkRight,
       annotateAlwaysField,
       jitterPx,
       jitterYPx,
@@ -228,6 +245,7 @@ export function ChartBlock({ visual, visualId }: Props) {
       mutedSeriesOpacity,
       highlightSeriesWidth,
       mutedSeriesWidth,
+      muteNonHighlighted,
       highlightSymbolSize,
       mutedSymbolSize,
       legendOnlyHighlighted,
@@ -253,12 +271,15 @@ export function ChartBlock({ visual, visualId }: Props) {
     const yAxisTitle = withUnits(yLabel || formatFieldLabel(y), resolvedVisual.units);
     const useMultiColor = colorMode === 'multi';
     const seriesPalette = useMultiColor ? chartPalette.seriesMulti : chartPalette.seriesMuted;
-    const axisTitleStyle = { fontWeight: 700, color: chartPalette.ink };
-    const axisLabelStyle = { color: chartPalette.axis };
-    const axisLineStyle = { lineStyle: { color: chartPalette.grid } };
-    const splitLineStyle = { lineStyle: { color: chartPalette.grid, opacity: 0.4 } };
     const isNarrow = typeof window !== 'undefined' ? window.innerWidth < 640 : false;
+    const axisTitleStyle = buildAxisTitleStyle();
+    const axisLabelStyle = buildAxisLabelStyle(isNarrow ? 10 : 12);
+    const legendTextStyle = buildLegendTextStyle(isNarrow ? 10 : 12);
+    const tooltipStyle = buildTooltipStyle(isNarrow ? 10 : 12);
+    const axisLineStyle = chartAxisLineStyle;
+    const splitLineStyle = chartSplitLineStyle;
     const baseWatermark = buildWatermarkGraphic({ top: isNarrow ? 48 : 32 });
+    const baseOption = { backgroundColor: chartPalette.background, textStyle: chartTextStyle };
     const hasSeriesField = Boolean(seriesField);
     const categoryLabelMap = (categoryLabels as Record<string, string>) || {};
     const normalizeCategory = (v: any) => typeof v === 'string' ? v.trim() : String(v ?? '');
@@ -316,6 +337,7 @@ export function ChartBlock({ visual, visualId }: Props) {
             color: labelColor,
             fontSize: labelFontSize,
             fontWeight: 600,
+            fontFamily: chartFontFamily,
           }
         : undefined;
       const stackKeys = stacks as string[];
@@ -325,6 +347,7 @@ export function ChartBlock({ visual, visualId }: Props) {
       const stackHighlightIndex = stackKeys.length <= 3
         ? (pickHighlightSeriesIndex(stackKeys) ?? pickHighlightIndexByTotals(stackValues))
         : undefined;
+      const colorOverrides = (resolvedVisual.spec?.colors as Record<string, string>) || {};
       const stackColorMap = buildSeriesColorMap(stackKeys, stackHighlightIndex, seriesPalette);
       const series = stackKeys.map(stack => {
         const data = orderedRows.map((r: Record<string, any>) => {
@@ -339,7 +362,7 @@ export function ChartBlock({ visual, visualId }: Props) {
           stack: isStacked ? 'total' : undefined,
           emphasis: { focus: 'series' },
           data,
-          itemStyle: { color: stackColorMap[stack] },
+          itemStyle: { color: colorOverrides[stack] || stackColorMap[stack] },
           label: valueLabelConfig,
           barGap: isStacked ? '10%' : '0%',
           barCategoryGap: isStacked ? '20%' : '35%',
@@ -347,8 +370,9 @@ export function ChartBlock({ visual, visualId }: Props) {
       });
 
       return {
-        backgroundColor: chartPalette.background,
+        ...baseOption,
         tooltip: {
+          ...tooltipStyle,
           trigger: 'axis',
           axisPointer: { type: 'shadow' },
           formatter: (params: any) => {
@@ -360,7 +384,7 @@ export function ChartBlock({ visual, visualId }: Props) {
             return `${cat}<br/>${rowsText}`;
           }
         },
-        legend: { top: barLegendTop, data: legendItems },
+        legend: { top: barLegendTop, data: legendItems, textStyle: legendTextStyle },
         grid: horizontal
           ? { top: barGridTop, right: 24 + watermarkPad, bottom: 48 + watermarkPad, left: barGridLeft }
           : { top: barGridTop, right: 24 + watermarkPad, bottom: 120 + watermarkPad, left: barGridLeft },
@@ -478,7 +502,7 @@ export function ChartBlock({ visual, visualId }: Props) {
           gridIndex: idx,
           data: displayCats,
           inverse: true,
-          axisLabel: { interval: 0, fontSize: 12, ...axisLabelStyle },
+          axisLabel: { interval: 0, ...axisLabelStyle },
           axisLine: axisLineStyle,
         });
         series.push({
@@ -494,13 +518,14 @@ export function ChartBlock({ visual, visualId }: Props) {
           text: labelMap[facetValue] || facetValue,
           left: facetLeft,
           top: Math.max(0, top - titleOffset),
-          textStyle: { fontSize: 12, fontWeight: 600, color: chartPalette.ink },
+          textStyle: { fontSize: 12, fontWeight: 600, color: chartPalette.ink, fontFamily: chartFontFamily },
         });
       });
 
       return {
-        backgroundColor: chartPalette.background,
+        ...baseOption,
         tooltip: {
+          ...tooltipStyle,
           trigger: 'item',
           formatter: (p: any) => `${p.name}: ${p.value}`
         },
@@ -526,7 +551,17 @@ export function ChartBlock({ visual, visualId }: Props) {
       const maxLabelLength = displayCategoriesLine.reduce((max, label) => Math.max(max, label.length), 0);
       const forcedRotation = typeof xLabelRotate === 'number' ? xLabelRotate : null;
       const xLabelRotation = forcedRotation ?? (maxLabelLength > 14 ? 35 : maxLabelLength > 10 ? 20 : 0);
-      const lineGridBottom = forcedRotation != null ? 120 : (xLabelRotation ? 96 : 64);
+      const lineGridBottom = typeof gridBottom === 'number'
+        ? gridBottom
+        : (forcedRotation != null ? 120 : (xLabelRotation ? 96 : 64));
+      const lineGridTop = typeof gridTop === 'number' ? gridTop : 48;
+      const lineLegendTop = typeof legendTop === 'number' ? legendTop : 8;
+      const lineLegendLeft = typeof legendLeft === 'number' || typeof legendLeft === 'string'
+        ? legendLeft
+        : undefined;
+      const yAxisGap = typeof (resolvedVisual.spec || {}).yAxisNameGap === 'number'
+        ? (resolvedVisual.spec as any).yAxisNameGap
+        : 44;
       const getRow = (cat: string, seriesName: string) =>
         orderedRows.find(r => normalizeCategory(r[x]) === cat && normalizeCategory(r[seriesField]) === seriesName);
 
@@ -555,15 +590,20 @@ export function ChartBlock({ visual, visualId }: Props) {
           value
         ])
       );
+      const colorOverrides = (resolvedVisual.spec?.colors as Record<string, string>) || {};
+      const normalizedColorOverrides = Object.fromEntries(
+        Object.entries(colorOverrides).map(([key, value]) => [normalizeCategory(key), value])
+      );
       const mutedColor = typeof mutedSeriesColor === 'string' ? mutedSeriesColor : chartPalette.light;
       const mutedOpacity = typeof mutedSeriesOpacity === 'number' ? mutedSeriesOpacity : 0.3;
       const mutedWidth = typeof mutedSeriesWidth === 'number' ? mutedSeriesWidth : 1.6;
       const highlightWidth = typeof highlightSeriesWidth === 'number' ? highlightSeriesWidth : 3;
       const mutedSymbol = typeof mutedSymbolSize === 'number' ? mutedSymbolSize : 4;
       const highlightSymbol = typeof highlightSymbolSize === 'number' ? highlightSymbolSize : 7;
+      const allowMuting = muteNonHighlighted !== false;
       const mutedSeries = new Set<string>();
       let seriesColorMap: Record<string, string>;
-      if (highlightSet.size > 0) {
+      if (highlightSet.size > 0 && allowMuting) {
         seriesColorMap = {};
         let highlightIdx = 0;
         uniqueSeries.forEach(seriesName => {
@@ -578,6 +618,15 @@ export function ChartBlock({ visual, visualId }: Props) {
             mutedSeries.add(seriesName);
           }
         });
+      } else if (highlightSet.size > 0) {
+        seriesColorMap = buildSeriesColorMap(uniqueSeries, undefined, seriesPalette);
+        uniqueSeries.forEach(seriesName => {
+          const normalized = normalizeCategory(seriesName);
+          const overrideColor = highlightColorMap[normalized];
+          if (overrideColor) {
+            seriesColorMap[seriesName] = overrideColor;
+          }
+        });
       } else {
         const highlightIndex = uniqueSeries.length === 1
           ? 0
@@ -586,21 +635,36 @@ export function ChartBlock({ visual, visualId }: Props) {
             : undefined;
         seriesColorMap = buildSeriesColorMap(uniqueSeries, highlightIndex, seriesPalette);
       }
+      if (Object.keys(normalizedColorOverrides).length > 0) {
+        const overrideAll = highlightSet.size === 0 || !allowMuting;
+        uniqueSeries.forEach((seriesName) => {
+          const normalized = normalizeCategory(seriesName);
+          const override = normalizedColorOverrides[normalized];
+          if (!override) return;
+          if (overrideAll || highlightSet.has(normalized)) {
+            seriesColorMap[seriesName] = override;
+          }
+        });
+      }
       const lineSeries = lineSeriesData.map(({ seriesName, displayName, data }) => {
-        const isMuted = mutedSeries.has(seriesName);
+        const normalized = normalizeCategory(seriesName);
+        const isHighlighted = highlightSet.has(normalized);
+        const isMuted = allowMuting && highlightSet.size > 0 && !isHighlighted;
+        const baseWidth = highlightSet.size > 0 ? mutedWidth : highlightWidth;
+        const baseSymbol = highlightSet.size > 0 ? mutedSymbol : highlightSymbol;
         return {
           name: displayName,
           type: 'line',
           smooth: true,
           data,
           showSymbol: !isMuted,
-          symbolSize: isMuted ? mutedSymbol : highlightSymbol,
+          symbolSize: isHighlighted ? highlightSymbol : baseSymbol,
           itemStyle: {
             color: seriesColorMap[seriesName],
             opacity: isMuted ? mutedOpacity : 1
           },
           lineStyle: {
-            width: isMuted ? mutedWidth : highlightWidth,
+            width: isHighlighted ? highlightWidth : baseWidth,
             color: seriesColorMap[seriesName],
             opacity: isMuted ? mutedOpacity : 1
           },
@@ -616,13 +680,21 @@ export function ChartBlock({ visual, visualId }: Props) {
         .filter(({ seriesName }) => !(legendOnlyHighlighted && highlightSet.size && mutedSeries.has(seriesName)))
         .map(({ displayName }) => displayName);
 
-      const lineWatermark = buildWatermarkGraphic({ top: isNarrow ? 60 : 40 });
+      const lineWatermark = buildWatermarkGraphic({
+        top: typeof watermarkTop === 'number' ? watermarkTop : (isNarrow ? 60 : 40),
+        right: typeof watermarkRight === 'number' ? watermarkRight : undefined
+      });
       return {
-        backgroundColor: chartPalette.background,
-        tooltip: { trigger: 'axis' },
-        legend: { top: 8, data: legendData },
+        ...baseOption,
+        tooltip: { ...tooltipStyle, trigger: 'axis' },
+        legend: {
+          top: lineLegendTop,
+          data: legendData,
+          textStyle: legendTextStyle,
+          ...(lineLegendLeft != null ? { left: lineLegendLeft } : {})
+        },
         grid: {
-          top: 48,
+          top: lineGridTop,
           right: 24 + watermarkPad,
           bottom: lineGridBottom + watermarkPad,
           left: typeof gridLeft === 'number' ? gridLeft : 56
@@ -638,7 +710,7 @@ export function ChartBlock({ visual, visualId }: Props) {
           axisTick: { alignWithLabel: true },
           axisLine: axisLineStyle,
           axisLabel: {
-            interval: 0,
+            interval: typeof xLabelInterval === 'number' ? xLabelInterval : 0,
             rotate: xLabelRotation,
             formatter: (val: string) => categoryLabelMap[val] || val,
             margin: 12,
@@ -651,7 +723,7 @@ export function ChartBlock({ visual, visualId }: Props) {
           name: yAxisTitle,
           nameLocation: 'middle',
           nameRotate: 90,
-          nameGap: 44,
+          nameGap: yAxisGap,
           nameTextStyle: { ...axisTitleStyle, align: 'center', verticalAlign: 'middle' },
           axisLabel: axisLabelStyle,
           axisLine: axisLineStyle,
@@ -768,7 +840,7 @@ export function ChartBlock({ visual, visualId }: Props) {
         itemWidth: 12,
         itemHeight: 12,
         selectedMode: false,
-        textStyle: { color: chartPalette.ink, fontSize: isNarrow ? 10 : 12 },
+        textStyle: legendTextStyle,
       };
       const mobileLegends = (() => {
         if (!legendItems.length || !isNarrow) return undefined;
@@ -820,8 +892,9 @@ export function ChartBlock({ visual, visualId }: Props) {
       };
 
       return {
-        backgroundColor: chartPalette.background,
+        ...baseOption,
         tooltip: {
+          ...tooltipStyle,
           trigger: 'item',
           formatter: (p: any) => {
             const data = p?.data?.raw || {};
@@ -893,7 +966,7 @@ export function ChartBlock({ visual, visualId }: Props) {
         areaStyle: resolvedVisual.type === 'line' && areaEnabled ? { opacity: 0.18, color: chartPalette.accent } : undefined,
         markLine: meanCategoryLabel ? {
           symbol: 'none',
-          label: { formatter: 'Mean distance', color: chartPalette.ink },
+          label: { formatter: 'Mean distance', color: chartPalette.ink, fontFamily: chartFontFamily },
           data: [{ xAxis: meanCategoryLabel }]
         } : undefined,
         itemStyle: barItemStyle,
@@ -908,10 +981,15 @@ export function ChartBlock({ visual, visualId }: Props) {
     ];
 
     return {
-      backgroundColor: chartPalette.background,
-      tooltip: { trigger: 'axis' },
-      legend: { top: 8 },
-      grid: { top: 48, right: 24 + watermarkPad, bottom: 120 + watermarkPad, left: 80 },
+      ...baseOption,
+      tooltip: { ...tooltipStyle, trigger: 'axis' },
+      legend: { top: 8, textStyle: legendTextStyle },
+      grid: {
+        top: 48,
+        right: 24 + watermarkPad,
+        bottom: 120 + watermarkPad,
+        left: typeof gridLeft === 'number' ? gridLeft : 80
+      },
       xAxis: {
         type: 'category',
         data: categories,
@@ -920,7 +998,13 @@ export function ChartBlock({ visual, visualId }: Props) {
         nameGap: 72,
         nameRotate: 0,
         nameTextStyle: axisTitleStyle,
-        axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle', ...axisLabelStyle },
+        axisLabel: {
+          interval: typeof xLabelInterval === 'number' ? xLabelInterval : 0,
+          rotate: 90,
+          align: 'right',
+          verticalAlign: 'middle',
+          ...axisLabelStyle
+        },
         axisLine: axisLineStyle,
       },
       yAxis: {

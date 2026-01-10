@@ -33,8 +33,8 @@ const visuals: Visual[] = [
         ],
         highlightCategories: ['All India'],
         colors: {
-          default: '#2B3C63',
-          highlight: '#c33c54'
+          default: '#111111',
+          highlight: '#D32F2F'
         },
         categoryLabels: {
           'Arunachal Pradesh': 'Arunachal P.'
@@ -48,7 +48,7 @@ const visuals: Visual[] = [
       units: 'Gross Enrolment Ratio',
       coverage: 'North-East India vs All India',
       source: { 
-        name: 'UDISE+/AISHE (via Supabase dataset)', 
+        name: 'UDISE+ 2023-24 and AISHE 2021-22', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_states.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -87,8 +87,8 @@ const visuals: Visual[] = [
         },
         xLabelRotate: 60,
         colors: {
-          'All India': '#2B3C63',
-          'Northeast': '#0FA77E',
+          'All India': '#111111',
+          'Northeast': '#D32F2F',
         },
         xLabel: 'Education stage',
         yLabel: 'Gross Enrolment Ratio',
@@ -115,14 +115,16 @@ const visuals: Visual[] = [
         yLabel: 'Tree cover loss (hectares)',
         area: true,
         colors: {
-          default: '#2B3C63'
-        }
+          default: '#111111'
+        },
+        gridLeft: 66,
+        xLabelInterval: 1
       },
       caption: 'Annual tree cover loss across North-Eastern states shows recurrent spikes over the last two decades.',
       units: 'Hectares',
       coverage: 'North-East India',
       source: { 
-        name: 'Satellite-derived tree cover loss (via Supabase dataset)', 
+        name: 'Satellite-derived tree cover loss (via World Resources Institute)', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_annual_total.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -130,7 +132,7 @@ const visuals: Visual[] = [
     },
     {
       id: 'ne-forest-loss-state-lines',
-      title: 'Tree cover loss by state (7-year smoothed)',
+      title: 'Tree cover loss by state',
       type: 'line',
       spec: {
         dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_by_state_smoothed_7yr.csv',
@@ -139,24 +141,29 @@ const visuals: Visual[] = [
         seriesField: 'state',
         colorMode: 'multi',
         xLabel: 'Year',
-        yLabel: 'Tree cover loss (ha, 7-yr smoothed)',
+        yLabel: 'Tree cover loss (hectares)',
         colors: {
-          Arunachal: '#6C5B7B',
-          'Arunachal Pradesh': '#6C5B7B',
-          Assam: '#E86A33',
-          Manipur: '#2A9D8F',
-          Meghalaya: '#C06C84',
-          Mizoram: '#355070',
-          Nagaland: '#E9C46A',
-          Sikkim: '#4CAF50',
-          Tripura: '#3A86FF'
-        }
+          Arunachal: '#E41A1C',
+          'Arunachal Pradesh': '#E41A1C',
+          Assam: '#377EB8',
+          Manipur: '#4DAF4A',
+          Meghalaya: '#984EA3',
+          Mizoram: '#FF7F00',
+          Nagaland: '#FFFF33',
+          Sikkim: '#A65628',
+          Tripura: '#F781BF'
+        },
+        gridTop: 84,
+        gridLeft: 70,
+        yAxisNameGap: 58,
+        highlightSymbolSize: 3,
+        mutedSymbolSize: 2
       },
       caption: 'Smoothed annual tree cover loss by North-Eastern state highlights Assam and Nagaland as consistent hotspots.',
-      units: 'Hectares (7-yr smoothed)',
+      units: 'Hectares',
       coverage: 'North-East India by state',
       source: { 
-        name: 'Satellite-derived tree cover loss (via Supabase dataset)', 
+        name: 'Satellite-derived tree cover loss (via World Resources Institute)', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_by_state_smoothed_7yr.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -178,8 +185,8 @@ const visuals: Visual[] = [
           'Loss (2001–2023)': 'Loss (2001–2023)'
         },
         colors: {
-          'Gain (2000–2020)': '#2B3C63',
-          'Loss (2001–2023)': '#C33C54'
+          'Gain (2000–2020)': '#111111',
+          'Loss (2001–2023)': '#D32F2F'
         },
         xLabel: 'State',
         yLabel: 'Hectares',
@@ -199,7 +206,7 @@ const visuals: Visual[] = [
       units: 'Hectares',
       coverage: 'North-East India by state',
       source: { 
-        name: 'Forest loss vs gain (via Supabase dataset)', 
+        name: 'Satellite-derived tree cover loss (via World Resources Institute)', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_forest_loss_vs_gain_by_state.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -218,7 +225,7 @@ const visuals: Visual[] = [
         meanField: 'mean_distance_km',
         binStartField: 'bin_start_km',
         binEndField: 'bin_end_km',
-        colors: { default: '#2B3C63' },
+        colors: { default: '#111111' },
         barGap: '0%',
         barCategoryGap: '0%',
         barBorder: { color: '#111', width: 0.4 },
@@ -228,7 +235,7 @@ const visuals: Visual[] = [
       units: 'Villages',
       coverage: 'Assam',
       source: { 
-        name: 'Assam PHC distance histogram (via Supabase dataset)', 
+        name: 'Census 2011 village locations (via SHRUG); PMGSY facility list 2024', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/assam_phc_distance_histogram.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -253,11 +260,11 @@ const visuals: Visual[] = [
           '10+ km': '10+ km'
         },
         colors: {
-          '0–3 km': '#2B3C63',
-          '3–5 km': '#4E6FA6',
-          '5–7 km': '#7A9BC2',
-          '7–10 km': '#A4BED6',
-          '10+ km': '#D0DEEB'
+          '0–3 km': '#67000D',
+          '3–5 km': '#A50F15',
+          '5–7 km': '#CB181D',
+          '7–10 km': '#EF3B2C',
+          '10+ km': '#FB6A4A'
         },
         yLabel: 'Share of villages (%)',
         categoryOrder: [],
@@ -268,7 +275,7 @@ const visuals: Visual[] = [
       units: '% of villages',
       coverage: 'Districts of Assam',
       source: { 
-        name: 'Assam PHC distance bands (via Supabase dataset)', 
+        name: 'Census 2011 village locations (via SHRUG); PMGSY facility list 2024', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/assam_district_phc_distance_bands_tidy.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -301,17 +308,34 @@ const visuals: Visual[] = [
         highlightSeries: ['All India', 'Meghalaya', 'Assam'],
         highlightSeriesColors: {
           'All India': '#111111',
-          Meghalaya: '#C06C84',
-          Assam: '#E86A33'
+          Meghalaya: '#984EA3',
+          Assam: '#E41A1C'
         },
+        colors: {
+          'All India': '#111111',
+          'Arunachal Pradesh': '#377EB8',
+          Arunachal: '#377EB8',
+          Assam: '#E41A1C',
+          Manipur: '#4DAF4A',
+          Meghalaya: '#984EA3',
+          Mizoram: '#FF7F00',
+          Nagaland: '#FFFF33',
+          Sikkim: '#A65628',
+          Tripura: '#F781BF'
+        },
+        muteNonHighlighted: false,
         mutedSeriesColor: '#CFCFCF',
         mutedSeriesOpacity: 0.18,
         mutedSeriesWidth: 1.2,
         highlightSeriesWidth: 3.2,
-        mutedSymbolSize: 3,
-        highlightSymbolSize: 7,
+        mutedSymbolSize: 2,
+        highlightSymbolSize: 5,
         legendOnlyHighlighted: true,
-        gridLeft: 44,
+        legendLeft: 'center',
+        legendTop: 8,
+        gridTop: 110,
+        gridLeft: 60,
+        watermarkTop: 72,
         xLabel: 'Education stage',
         yLabel: 'Gross Enrolment Ratio (GER)',
         height: 560
@@ -320,7 +344,7 @@ const visuals: Visual[] = [
       units: 'Gross Enrolment Ratio',
       coverage: 'North-East states vs All India',
       source: { 
-        name: 'UDISE+/AISHE (via Supabase dataset)', 
+        name: 'UDISE+ 2023-24 and AISHE 2021-22', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_dist_states.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -345,8 +369,8 @@ const visuals: Visual[] = [
           'Small Growers': 'Small Tea Growers'
         },
         colors: {
-          'Big Growers': '#2B3C63',
-          'Small Growers': '#0FA77E'
+          'Big Growers': '#111111',
+          'Small Growers': '#D32F2F'
         },
         yLabel: 'Share (%)'
       },
@@ -379,8 +403,8 @@ const visuals: Visual[] = [
           'Big Growers': 'Large Tea Estates'
         },
         colors: {
-          'Small Growers': '#0FA77E',
-          'Big Growers': '#2B3C63'
+          'Small Growers': '#D32F2F',
+          'Big Growers': '#111111'
         },
         yLabel: 'Area Distribution (%)'
       },
@@ -409,10 +433,10 @@ const visuals: Visual[] = [
           others: 'Other Types'
         },
         colors: {
-          orthodox: '#91cc75',
-          ctc: '#fac858',
-          green: '#5470c6',
-          others: '#ee6666'
+          orthodox: '#111111',
+          ctc: '#D32F2F',
+          green: '#B71C1C',
+          others: '#6B6B6B'
         },
         yLabel: 'Proportion of Tea Exports'
       },
@@ -469,13 +493,13 @@ const visuals: Visual[] = [
           'Rural': 'Rural Roads'
         },
         colors: {
-          'Urban': '#2B3C63',
-          'Rural': '#0FA77E'
+          'Urban': '#111111',
+          'Rural': '#D32F2F'
         },
-        yLabel: 'Road density (km per 100 sq km)'
+        yLabel: 'Road density (km per 1000 sq km)'
       },
       caption: 'Side-by-side comparison of urban and rural road density across North-East states.',
-      units: 'km per 100 sq km',
+      units: 'km per 1000 sq km',
       coverage: 'North-East India',
       source: { 
         name: 'Basic Road Statistics of India, 2019-20', 
@@ -511,8 +535,8 @@ const visuals: Visual[] = [
           'Rural': 'Rural Roads'
         },
         colors: {
-          'Urban': '#2B3C63',
-          'Rural': '#0FA77E'
+          'Urban': '#111111',
+          'Rural': '#D32F2F'
         },
         yLabel: 'Road length (km per 1,000 people)'
       },
@@ -553,8 +577,8 @@ const visuals: Visual[] = [
           'Surfaced': 'Surfaced'
         },
         colors: {
-          'Total': '#2B3C63',
-          'Surfaced': '#0FA77E'
+          'Total': '#111111',
+          'Surfaced': '#D32F2F'
         },
         yLabel: 'Road length (km)'
       },
