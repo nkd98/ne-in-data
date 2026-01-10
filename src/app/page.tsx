@@ -12,8 +12,12 @@ import { getArticles } from "@/lib/data";
 import { InsightCard } from "@/components/insight-card";
 
 
-const topics = getTopics().slice(0, 8);
-const insights = getArticles().slice(0, 3);
+const articles = getArticles();
+const topicIdsWithArticles = new Set(articles.flatMap((article) => article.topicIds));
+const topics = getTopics()
+  .filter((topic) => topicIdsWithArticles.has(topic.id))
+  .slice(0, 8);
+const insights = articles.slice(0, 3);
 const featuredInsight = insights[0];
 const secondaryInsights = insights.slice(1);
 

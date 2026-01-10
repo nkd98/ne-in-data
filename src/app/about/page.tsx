@@ -42,10 +42,10 @@ export default function AboutPage() {
       <p>
         UPI:{" "}
         <a
-          href="upi://pay?pa=7576081608-2@ybl"
+          href="upi://pay?pa=kumarniruj67@okicici"
           className="text-primary hover:underline"
         >
-          7576081608-2@ybl
+          kumarniruj67@okicici
         </a>
       </p>
 
