@@ -413,7 +413,13 @@ function ChartPreview({
   );
 }
 
-export function InsightCard({ article, layout = 'compact' }: { article: Article; layout?: 'featured' | 'compact' }) {
+type InsightCardProps = {
+  article: Article;
+  layout?: 'featured' | 'compact';
+  titleClassName?: string;
+};
+
+export function InsightCard({ article, layout = 'compact', titleClassName }: InsightCardProps) {
   const topic = getTopics().find(t => article.topicIds.includes(t.id));
   const topicColorVar = topic?.color ? `var(--${topic.color})` : 'var(--primary)';
   const topicColor = `hsl(${topicColorVar})`;
@@ -484,7 +490,12 @@ export function InsightCard({ article, layout = 'compact' }: { article: Article;
           </div>
         )}
 
-        <h3 className="text-lg md:text-xl font-display leading-snug mb-2 group-hover:text-primary transition-colors">
+        <h3
+          className={cn(
+            "text-lg md:text-xl font-display leading-snug mb-2 text-foreground",
+            titleClassName
+          )}
+        >
           {article.title}
         </h3>
         <p className="text-sm text-muted-foreground flex-grow mb-4">

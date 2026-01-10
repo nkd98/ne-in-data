@@ -7,7 +7,7 @@ export default function AboutPage() {
       </p>
       <p>
   
-        Our work focuses on questions that shape everyday life in the Northeast: how people work, move, learn, and adapt. Each piece is built from reliable, open sources and presented with context and transparency. The project is currently maintained by a single independent researcher.
+        Our work focuses on questions that shape everyday life in the Northeast: how people work, move, learn, and adapt. Each piece is built from reliable, open sources and presented with context and transparency. The project is created and maintained by Niruj Deka.
 
  
       </p>

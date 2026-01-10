@@ -9,7 +9,7 @@ const authors: Author[] = [
 const topics: Topic[] = [
   { id: 'employment', slug: 'employment', name: 'Employment', description: 'Trends and analysis of employment data across the North-Eastern states.', imageId: 'topic-employment', color: 'topic-teal' },
   { id: 'education', slug: 'education', name: 'Education', description: 'Insights into literacy rates, schooling, and educational infrastructure.', imageId: 'topic-education', color: 'topic-orange' },
-  { id: 'agriculture', slug: 'agriculture', name: 'Agriculture', description: 'Data on crop production, farming practices, and agricultural economy.', imageId: 'topic-agriculture', color: 'topic-green' },
+  { id: 'environment', slug: 'environment', name: 'Environment', description: 'Forest cover, climate, and ecological change across the North-East.', imageId: 'topic-environment', color: 'topic-green' },
   { id: 'infrastructure', slug: 'infrastructure', name: 'Infrastructure', description: 'Development of infrastructure like roads, bridges, and power.', imageId: 'topic-infrastructure', color: 'topic-indigo' },
 ];
 

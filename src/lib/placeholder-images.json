@@ -37,6 +37,12 @@
       "imageHint": "education classroom"
     },
     {
+      "id": "topic-environment",
+      "description": "Forest canopy in the North-East.",
+      "imageUrl": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+      "imageHint": "forest canopy"
+    },
+    {
       "id": "topic-agriculture",
       "description": "A lush green paddy field.",
       "imageUrl": "https://images.unsplash.com/photo-1711397651462-3b2a22f5cfc8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhZ3JpY3VsdHVyZSUyMGZpZWxkfGVufDB8fHx8MTc2MTgwOTYwOXww&ixlib=rb-4.1.0&q=80&w=1080",

@@ -1,7 +1,6 @@
-import { getArticles, getTopicBySlug, getTopics, getVisuals } from '@/lib/data';
+import { getArticles, getTopicBySlug, getTopics } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { ArticleCard } from '@/components/article-card';
-import { VisualCard } from '@/components/visual-card';
 
 export async function generateStaticParams() {
   const topics = getTopics();
@@ -19,8 +18,6 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
   }
 
   const topicArticles = getArticles().filter(article => article.topicIds.includes(topic.id));
-  const topicVisuals = getVisuals().filter(visual => visual.tags.includes(topic.slug));
-
   return (
     <div className="flex flex-col gap-12 py-8 md:gap-16 md:py-16">
       <header className="container mx-auto px-4 text-center">
@@ -46,18 +43,6 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
         </section>
       )}
 
-      {topicVisuals.length > 0 && (
-        <section className="container mx-auto px-4">
-          <h2 className="mb-8 text-3xl font-bold tracking-tight md:text-4xl">
-            Related Visuals
-          </h2>
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {topicVisuals.map((visual) => (
-              <VisualCard key={visual.id} visual={visual} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

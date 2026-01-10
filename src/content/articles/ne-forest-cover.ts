@@ -5,7 +5,7 @@ const article: Article = {
   title: 'Forest Loss in Northeast India: What the Data Shows',
   subtitle: 'Tracking forest loss over time, differences across states, and how loss compares with gain.',
   authorIds: ['niruj'],
-  topicIds: ['infrastructure'],
+  topicIds: ['environment'],
   status: 'published',
   publishedAt: '2026-01-10',
   updatedAt: '2026-01-10',

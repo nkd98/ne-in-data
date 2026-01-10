@@ -54,6 +54,7 @@ export function ChartBlock({ visual, visualId }: Props) {
 
   useEffect(() => {
     if (!resolvedVisual) return;
+    setError(null);
     const dataUrl = resolvedVisual.spec?.dataUrl;
     const { x, y, stacks, stackField, valueField, seriesField, seriesValueFields } = resolvedVisual.spec || {};
     const hasSeriesField = Boolean(seriesField);
@@ -69,8 +70,24 @@ export function ChartBlock({ visual, visualId }: Props) {
     }
 
     let mounted = true;
-    fetch(dataUrl)
-      .then(r => r.text())
+    const fetchCsvText = async () => {
+      try {
+        const directResponse = await fetch(dataUrl);
+        if (directResponse.ok) {
+          return directResponse.text();
+        }
+      } catch (err) {
+        console.warn('Direct chart data fetch failed, falling back to proxy.', err);
+      }
+      const proxyUrl = `/api/visual-data?url=${encodeURIComponent(dataUrl)}`;
+      const proxyResponse = await fetch(proxyUrl);
+      if (!proxyResponse.ok) {
+        throw new Error(`Failed to fetch data (${proxyResponse.status})`);
+      }
+      return proxyResponse.text();
+    };
+
+    fetchCsvText()
       .then(csv => Papa.parse(csv, { header: true, dynamicTyping: true }).data)
       .then(parsed => {
         if (!mounted) return;
@@ -172,7 +189,7 @@ export function ChartBlock({ visual, visualId }: Props) {
       })
       .catch(err => {
         console.error(err);
-        if (mounted) setError(String(err));
+        if (mounted) setError('Failed to fetch data');
       });
 
     return () => {

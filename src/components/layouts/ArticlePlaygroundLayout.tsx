@@ -93,7 +93,7 @@ export default function ArticlePlaygroundLayout({
           </div>
           <div className="space-y-6">
             <div className="space-y-4">
-              <h1 className="text-4xl font-headline font-extrabold tracking-tight leading-tight md:text-5xl">
+              <h1 className="text-4xl font-headline font-extrabold tracking-tight leading-tight text-primary md:text-5xl">
                 {title}
               </h1>
               <p className="text-lg text-muted-foreground md:text-xl">

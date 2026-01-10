@@ -47,6 +47,9 @@ export default function Home() {
       
       {/* Newsletter Section */}
       <section className="border-t border-border bg-background py-16">
+        <p className="mx-auto mb-4 max-w-md text-center text-sm text-muted-foreground">
+          Get monthly insights in your inbox.
+        </p>
         <form
           action="https://buttondown.email/api/emails/embed-subscribe/northeastindata"
           method="post"
