@@ -1,4 +1,4 @@
-import { getTopics } from '@/lib/data';
+import { getArticles, getTopics } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
@@ -6,7 +6,10 @@ import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 
 export default function TopicsPage() {
-  const topics = getTopics();
+  const topicIdsWithArticles = new Set(
+    getArticles().flatMap((article) => article.topicIds)
+  );
+  const topics = getTopics().filter((topic) => topicIdsWithArticles.has(topic.id));
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-16">
@@ -15,8 +18,8 @@ export default function TopicsPage() {
           Explore Topics
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-          Dive into the data stories shaping the Northeast, from employment
-          trends to environmental changes.
+          Dive into the data stories shaping the Northeast, from education
+          to environmental change.
         </p>
       </header>
 
