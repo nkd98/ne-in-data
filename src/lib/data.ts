@@ -98,7 +98,7 @@ const visuals: Visual[] = [
       units: '%',
       coverage: 'North-East vs All India',
       source: { 
-        name: 'UDISE+/AISHE (via Supabase dataset)', 
+        name: 'UDISE+ 2023-24 and AISHE 2021-22', 
         url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_ger_comp_ind_vs_ne.csv' 
       },
       lastUpdated: '2025-11-01',
@@ -469,7 +469,7 @@ const visuals: Visual[] = [
     {
       // Road Stats Visuals
       id: 'road-density-ne',
-      title: 'Road Density in North-East India (2023)',
+      title: 'Road Density in North-East India',
       type: 'bar',
       spec: {
         dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_road_density_clean.csv',
@@ -511,7 +511,7 @@ const visuals: Visual[] = [
     },
     {// Road Stats Visuals
       id: 'road-len-ne',
-      title: 'Road Length per 1,000 People (North-East, 2023)',
+      title: 'Road Length per 1,000 People',
       type: 'bar',
       spec: {
         dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_road_length_per_1000pop_clean.csv',
@@ -553,7 +553,7 @@ const visuals: Visual[] = [
     },
     {// Road Stats Visuals
       id: 'road-surfaced-len-ne',
-      title: 'Surfaced vs Total Road Length (North-East, 2023)',
+      title: 'Surfaced vs Total Road Length',
       type: 'bar',
       spec: {
         dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/ne_total_vs_surfaced_road_length_clean.csv',

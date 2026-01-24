@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { getTopics } from "@/lib/data";
 import { getArticles } from "@/lib/data";
 import { InsightCard } from "@/components/insight-card";
+import { useState, type FormEvent } from "react";
 
 
 const articles = getArticles();
@@ -22,6 +23,59 @@ const featuredInsight = insights[0];
 const secondaryInsights = insights.slice(1);
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
+  const isBusy = status === "loading";
+
+  const handleSubscribe = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setStatus("error");
+      setMessage("Please enter a valid email.");
+      return;
+    }
+
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const errorMessage =
+          typeof data?.error === "string" && data.error.trim().length > 0
+            ? data.error
+            : "Something went wrong. Please try again.";
+        throw new Error(errorMessage);
+      }
+
+      setStatus("success");
+      setMessage(
+        typeof data?.message === "string" && data.message.trim().length > 0
+          ? data.message
+          : "Thanks! Check your inbox to confirm."
+      );
+      setEmail("");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error && error.message.length > 0
+          ? error.message
+          : "Something went wrong. Please try again.";
+      setStatus("error");
+      setMessage(errorMessage);
+    }
+  };
+
   return (
     <>
       <Hero topics={topics} />
@@ -54,26 +108,44 @@ export default function Home() {
         <p className="mx-auto mb-4 max-w-md text-center text-sm text-muted-foreground">
           Get monthly insights in your inbox.
         </p>
-        <form
-          action="https://buttondown.email/api/emails/embed-subscribe/northeastindata"
-          method="post"
-          target="_blank"
-          className="relative mx-auto mt-8 flex max-w-md"
-        >
-          <input
-            type="email"
-            name="email"
-            required
-            placeholder="Enter your email"
-            className="w-full rounded-l-md border border-input bg-background px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-          />
-          <button
-            type="submit"
-            className="rounded-l-none rounded-r-md px-6 py-3 bg-primary text-primary-foreground font-medium"
-          >
-            Subscribe
-          </button>
-        </form>
+        <div className="mx-auto mt-8 max-w-md">
+          <form onSubmit={handleSubscribe} className="flex">
+            <input
+              type="email"
+              name="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (status !== "idle") {
+                  setStatus("idle");
+                  setMessage("");
+                }
+              }}
+              placeholder="Enter your email"
+              disabled={isBusy}
+              className="w-full rounded-l-md border border-input bg-background px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-70"
+            />
+            <button
+              type="submit"
+              disabled={isBusy}
+              className="rounded-l-none rounded-r-md px-6 py-3 bg-primary text-primary-foreground font-medium disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isBusy ? "Subscribing..." : "Subscribe"}
+            </button>
+          </form>
+          {message ? (
+            <p
+              className={`mt-3 text-center text-sm ${
+                status === "error" ? "text-destructive" : "text-muted-foreground"
+              }`}
+              aria-live="polite"
+            >
+              {message}
+            </p>
+          ) : null}
+        </div>
       </section>
     </>
   );
