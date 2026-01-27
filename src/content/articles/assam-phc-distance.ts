@@ -68,7 +68,11 @@ const article: Article = {
     {
       type: 'p',
       content: 'Taken together, the visuals show a simple picture. Assam\'s average distance to primary healthcare is moderate, but access is uneven. The largest gaps are concentrated in specific districts and clusters, particularly where settlements are more spread out or harder to reach. Mapping these patterns helps identify where villages remain far from basic healthcare and where improvements could make the greatest difference.'
-    }
+    },
+    {
+      type: 'sources',
+      content: 'Sources: Census 2011 village locations (via SHRUG) and PMGSY facility list (2024).'
+    },
   ],
   relatedArticleIds: ['north-east-road-stats', 'assam-employment-trends-2011-2024']
 };

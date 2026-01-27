@@ -109,7 +109,11 @@ const article: Article = {
     {
       type: 'p',
       content: 'Taken together, the charts show a clear pattern. Forest loss in Northeast India was relatively moderate for many years, then rose sharply in the mid-2010s and has stayed high since. A few states account for a large share of this loss, while others contribute less. Across most of the region, forest gain has not kept pace with forest loss.'
-    }
+    },
+    {
+      type: 'sources',
+      content: 'Source: Satellite-derived tree cover loss data via World Resources Institute (Global Forest Watch).'
+    },
   ],
   relatedArticleIds: ['north-east-education-ger', 'assam-employment-trends-2011-2024']
 };

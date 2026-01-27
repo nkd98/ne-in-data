@@ -66,9 +66,11 @@ const article: Article = {
     {
       type: 'p',
       content: "Small tea growers have emerged as a vital force in Assam's tea industry, commanding entire districts in some cases, even while large estates still anchor overall production."
-    }
-
-
+    },
+    {
+      type: 'sources',
+      content: 'Source: Statistical Handbook of Assam, 2023-24.'
+    },
   ],
   relatedArticleIds: ['assam-tea-exports-composition', 'assam-employment-trends-2011-2024']
 };

@@ -595,6 +595,121 @@ const visuals: Visual[] = [
     },
 
     {
+      // Youth Employment Visuals
+      id: 'ne-youth-lfpr',
+      title: 'Youth Labour Force Participation Rate (LFPR), Ages 15-29',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/lfpr_15_29_ne.csv',
+        x: 'state',
+        y: 'person_total',
+        categoryOrder: [
+          'Arunachal Pradesh',
+          'Assam',
+          'Manipur',
+          'Meghalaya',
+          'Mizoram',
+          'Nagaland',
+          'Sikkim',
+          'Tripura'
+        ],
+        colors: {
+          default: '#111111'
+        },
+        barCategoryGap: '35%',
+        barGap: '10%',
+        yLabel: 'LFPR (%)'
+      },
+      caption: 'Youth labour force participation (ages 15–29) varies widely across North-Eastern states.',
+      units: '%',
+      coverage: 'North-East India (ages 15–29)',
+      source: {
+        name: 'Periodic Labour Force Survey (PLFS) 2023-24',
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/lfpr_15_29_ne.csv'
+      },
+      lastUpdated: '2026-01-27',
+      tags: ['employment', 'youth', 'lfpr', 'north-east']
+    },
+    {
+      id: 'ne-youth-unemployment',
+      title: 'Youth Unemployment Rate, Ages 15-29',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/unemployed_15_29_ne.csv',
+        x: 'state',
+        y: 'person_total',
+        categoryOrder: [
+          'Arunachal Pradesh',
+          'Assam',
+          'Manipur',
+          'Meghalaya',
+          'Mizoram',
+          'Nagaland',
+          'Sikkim',
+          'Tripura',
+          'all India'
+        ],
+        colors: {
+          default: '#111111'
+        },
+        barCategoryGap: '35%',
+        barGap: '10%',
+        yLabel: 'Unemployment rate (%)'
+      },
+      caption: 'Youth unemployment (ages 15–29) differs sharply across North-Eastern states.',
+      units: '%',
+      coverage: 'North-East India (ages 15–29)',
+      source: {
+        name: 'Periodic Labour Force Survey (PLFS) 2023-24',
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/unemployed_15_29_ne.csv'
+      },
+      lastUpdated: '2026-01-27',
+      tags: ['employment', 'youth', 'unemployment', 'north-east']
+    },
+    {
+      id: 'ne-youth-job-types',
+      title: 'Job Types Among Employed Youth, Ages 15-29',
+      type: 'bar',
+      spec: {
+        dataUrl: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/jobs_15_29_ne.csv',
+        x: 'state',
+        stacks: ['se_employed', 'salaried', 'casual'],
+        stacked: true,
+        categoryOrder: [
+          'Arunachal Pradesh',
+          'Assam',
+          'Manipur',
+          'Meghalaya',
+          'Mizoram',
+          'Nagaland',
+          'Sikkim',
+          'Tripura',
+          'all India'
+        ],
+        stackLabels: {
+          se_employed: 'Self-employed',
+          salaried: 'Regular wage',
+          casual: 'Casual labour'
+        },
+        colors: {
+          se_employed: '#111111',
+          salaried: '#D32F2F',
+          casual: '#F57C00'
+        },
+        yLabel: 'Share of employed youth (%)'
+      },
+      caption: 'The mix of self-employment, regular wage work, and casual labour differs sharply across North-Eastern states.',
+      units: '%',
+      coverage: 'North-East India vs India',
+      source: {
+        name: 'Periodic Labour Force Survey (PLFS) 2023-24',
+        url: 'https://tngxrcncslblrarjqtwn.supabase.co/storage/v1/object/public/datasets/jobs_15_29_ne.csv'
+      },
+      lastUpdated: '2026-01-27',
+      tags: ['employment', 'youth', 'job-types', 'north-east']
+    },
+
+    {
       id: 'education-ger-trend',
       title: 'Gross Enrolment Ratio, North-East (Year range)',
       type: 'line',

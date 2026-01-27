@@ -93,7 +93,11 @@ const article: Article = {
     {
       type: 'p',
       content: 'The Northeast’s advantage is strongest at the start of schooling, but it fades after class 5. The pipeline narrows as fewer students continue into secondary and then college. Differences across states are large in the early years, but they shrink later because enrolment falls everywhere. By higher education, the region ends up in a low range, with only a few states standing out.'
-    }
+    },
+    {
+      type: 'sources',
+      content: 'Sources: UDISE+ 2023-24 and AISHE 2021-22.'
+    },
   ],
   relatedArticleIds: ['assam-tea-exports-composition', 'assam-employment-trends-2011-2024']
 };

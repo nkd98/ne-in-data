@@ -88,6 +88,10 @@ const article: Article = {
       type: 'p',
       content: 'Understanding these patterns helps explain why travel across the Northeast can vary so sharply from one place to another. It also shows that improving connectivity is not only about expanding road length, but about ensuring that existing roads remain accessible, durable and safe throughout the year.'
     },
+    {
+      type: 'sources',
+      content: 'Source: Basic Road Statistics of India, 2019-20 (Ministry of Road Transport and Highways).'
+    },
   ],
   relatedArticleIds: ['assam-tea-exports-composition', 'assam-employment-trends-2011-2024']
 };
