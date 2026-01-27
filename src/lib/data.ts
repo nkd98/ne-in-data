@@ -613,6 +613,9 @@ const visuals: Visual[] = [
           'Sikkim',
           'Tripura'
         ],
+        categoryLabels: {
+          'all India': 'All India'
+        },
         colors: {
           default: '#111111'
         },
@@ -649,6 +652,9 @@ const visuals: Visual[] = [
           'Tripura',
           'all India'
         ],
+        categoryLabels: {
+          'all India': 'All India'
+        },
         colors: {
           default: '#111111'
         },
@@ -686,6 +692,9 @@ const visuals: Visual[] = [
           'Tripura',
           'all India'
         ],
+        categoryLabels: {
+          'all India': 'All India'
+        },
         stackLabels: {
           se_employed: 'Self-employed',
           salaried: 'Regular wage',

@@ -314,6 +314,10 @@ export function ChartBlock({ visual, visualId }: Props) {
 
     const categories = orderedRows.map(r => normalizeCategory(r[x]));
     const isStacked = stacked !== false; // default true when stacks are present
+    const categoryLabelFormatter = (value: any) => {
+      const key = normalizeCategory(value);
+      return categoryLabelMap[key] || value;
+    };
 
     const parseNum = (v: any) => {
       if (v == null) return 0;
@@ -426,14 +430,21 @@ export function ChartBlock({ visual, visualId }: Props) {
               nameGap: 72,
               nameRotate: 0,
               nameTextStyle: axisTitleStyle,
-              axisLabel: { interval: 0, rotate: 90, align: 'right', verticalAlign: 'middle', ...axisLabelStyle },
+              axisLabel: {
+                interval: 0,
+                rotate: 90,
+                align: 'right',
+                verticalAlign: 'middle',
+                formatter: categoryLabelFormatter,
+                ...axisLabelStyle
+              },
               axisLine: axisLineStyle,
             },
         yAxis: horizontal
           ? {
               type: 'category',
               data: categories,
-              axisLabel: { interval: 0, ...axisLabelStyle },
+              axisLabel: { interval: 0, formatter: categoryLabelFormatter, ...axisLabelStyle },
               axisLine: axisLineStyle,
             }
           : {
@@ -1020,6 +1031,7 @@ export function ChartBlock({ visual, visualId }: Props) {
           rotate: 90,
           align: 'right',
           verticalAlign: 'middle',
+          formatter: categoryLabelFormatter,
           ...axisLabelStyle
         },
         axisLine: axisLineStyle,

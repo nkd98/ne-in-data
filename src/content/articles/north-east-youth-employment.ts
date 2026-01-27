@@ -52,7 +52,7 @@ const article: Article = {
     {
       type: 'p',
       content:
-        'The chart shows that entry into the labour force differs widely across the Northeast. In some states, such as Mizoram, only about one-quarter of young people are part of the labour force. In others, such as Meghalaya, more than 60% of youth have already entered it. With the national average at around 47%, Northeast states lie on both sides of the countrywide level.',
+        'The chart shows that entry into the labour force differs widely across the Northeast. In some states, such as Mizoram, less than 30% of young people are part of the labour force. In others, such as Meghalaya, more than 60% of youth have already entered it. With the national average at around 47%, Northeast states lie on both sides of the countrywide level.',
     },
     {
       type: 'p',
@@ -127,12 +127,7 @@ const article: Article = {
     {
       type: 'p',
       content:
-        'Taken together, the evidence points to a gap between entering the labour force and finding stable work. In several Northeast states, many young people are already part of the labour force, yet unemployment remains high and regular salaried jobs are limited. This suggests that the main issue is not whether young people are willing to work.',
-    },
-    {
-      type: 'p',
-      content:
-        'Instead, the difficulty lies in what happens after they enter. Many young people are able to find some form of work, but this work is often self-employment or other less stable arrangements, with limited access to regular salaried jobs. As a result, the labour market struggles to absorb young people into stable and secure employment.',
+        'Taken together, the evidence points to a gap between entering the labour force and finding stable work. In several Northeast states, many young people are already part of the labour force, yet unemployment remains high and regular salaried jobs are limited. This suggests that the main issue is not whether young people are willing to work. Instead, the difficulty lies in what happens after they enter. Many young people are able to find some form of work, but this work is often self-employment or other less stable arrangements, with limited access to regular salaried jobs. As a result, the labour market struggles to absorb young people into stable and secure employment.',
     },
     {
       type: 'sources',
